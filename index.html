@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
-    <title>Генератор синуса + точный ввод</title>
-    <meta name="description" content="Генератор чистого синуса 20–20000 Гц с ползунком и точным вводом частоты, скачивание WAV 1 минута.">
+    <title>Генератор синуса + WAV с длительностью</title>
+    <meta name="description" content="Генератор синуса 20–20000 Гц с точным вводом частоты и длительности WAV.">
     <link rel="icon" href="data:image/svg+xml,&lt;svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'&gt;&lt;text y='.9em' font-size='90'&gt;〰️&lt;/text&gt;&lt;/svg&gt;">
     <style>
         * {
@@ -140,7 +140,7 @@
             flex-wrap: wrap;
             align-items: center;
             justify-content: center;
-            gap: 12px;
+            gap: 10px;
             flex-shrink: 0;
             margin-bottom: 2px;
         }
@@ -167,6 +167,42 @@
             background: #4a8a6a;
             border-color: #6ab08a;
             box-shadow: 0 0 30px rgba(74, 138, 106, 0.4);
+        }
+        .duration-group {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: #1a2a3a;
+            padding: 4px 12px 4px 8px;
+            border-radius: 50px;
+            border: 1px solid #4a6a8a;
+        }
+        .duration-group label {
+            color: #8899aa;
+            font-size: clamp(13px, 2.5vw, 16px);
+            font-weight: 500;
+        }
+        #durationInput {
+            background: transparent;
+            border: none;
+            color: #fff;
+            font-size: clamp(16px, 4vw, 22px);
+            font-weight: 600;
+            width: clamp(60px, 15vw, 100px);
+            text-align: center;
+            outline: none;
+            font-family: inherit;
+            -moz-appearance: textfield;
+            padding: 4px 0;
+        }
+        #durationInput::-webkit-outer-spin-button,
+        #durationInput::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        .duration-group span {
+            color: #8899aa;
+            font-size: clamp(13px, 2.5vw, 16px);
         }
         #downloadBtn {
             background: #3a3f5a;
@@ -220,6 +256,8 @@
             #toggleBtn, #downloadBtn { padding: 8px 20px; font-size: 15px; }
             .footer-links { padding-top: 6px; font-size: 11px; }
             #freqInput { font-size: 20px; width: 80px; padding: 2px 6px; }
+            #durationInput { font-size: 16px; width: 60px; }
+            .duration-group { padding: 2px 10px 2px 6px; }
         }
         @media (max-height: 480px) {
             #freqSlider { height: 24px; width: min(45vh, 60%); }
@@ -228,6 +266,8 @@
             #freqDisplay { font-size: 28px; }
             #hint { font-size: 10px; }
             #freqInput { font-size: 16px; width: 70px; padding: 2px 4px; }
+            #durationInput { font-size: 14px; width: 50px; }
+            .duration-group { padding: 2px 8px 2px 4px; }
         }
     </style>
 </head>
@@ -244,7 +284,12 @@
         </div>
         <div class="controls-row">
             <button id="toggleBtn">▶ Включить</button>
-            <button id="downloadBtn">⬇ WAV (1 min)</button>
+            <div class="duration-group">
+                <label>⏱</label>
+                <input type="number" id="durationInput" min="1" max="1000" step="1" value="60">
+                <span>с</span>
+            </div>
+            <button id="downloadBtn">⬇ WAV</button>
         </div>
         <div id="hint">тяните вверх‑вниз или введите частоту</div>
     </div>
@@ -259,6 +304,7 @@
             const slider = document.getElementById('freqSlider');
             const freqValue = document.getElementById('freqValue');
             const freqInput = document.getElementById('freqInput');
+            const durationInput = document.getElementById('durationInput');
             const toggleBtn = document.getElementById('toggleBtn');
             const downloadBtn = document.getElementById('downloadBtn');
 
@@ -268,10 +314,13 @@
             let isPlaying = false;
             let ignoreSliderUpdate = false;
             let ignoreInputUpdate = false;
+            let ignoreDurationUpdate = false;
 
             const MIN_FREQ = 20;
             const MAX_FREQ = 20000;
             const RATIO = MAX_FREQ / MIN_FREQ;
+            const MIN_DURATION = 1;
+            const MAX_DURATION = 1000;
 
             function sliderToFreq(val) {
                 return MIN_FREQ * Math.pow(RATIO, val);
@@ -283,6 +332,13 @@
 
             function getCurrentFreq() {
                 return sliderToFreq(parseFloat(slider.value));
+            }
+
+            function getDuration() {
+                let val = parseInt(durationInput.value);
+                if (isNaN(val) || val < MIN_DURATION) val = MIN_DURATION;
+                if (val > MAX_DURATION) val = MAX_DURATION;
+                return val;
             }
 
             function clampFreq(freq) {
@@ -297,7 +353,6 @@
                     display = Math.round(freq);
                 }
                 freqValue.textContent = display;
-                // Обновляем поле ввода, но без зацикливания
                 if (!ignoreInputUpdate) {
                     ignoreInputUpdate = true;
                     freqInput.value = Math.round(freq);
@@ -309,12 +364,6 @@
                 if (ignoreSliderUpdate) return;
                 const freq = getCurrentFreq();
                 updateDisplay(freq);
-                // Обновляем ползунок, если нужно
-                if (!ignoreSliderUpdate) {
-                    ignoreSliderUpdate = true;
-                    // ползунок уже обновлён, ничего не делаем
-                    ignoreSliderUpdate = false;
-                }
                 if (isPlaying && oscillator) {
                     try {
                         oscillator.frequency.setTargetAtTime(freq, audioCtx.currentTime, 0.01);
@@ -400,13 +449,15 @@
                 }
             }
 
-            // —————— СКАЧИВАНИЕ МИНУТНОГО ЗАЦИКЛЕННОГО WAV ——————
-            function downloadLoopWav() {
+            // —————— СКАЧИВАНИЕ WAV С ПРОИЗВОЛЬНОЙ ДЛИТЕЛЬНОСТЬЮ ——————
+            function downloadWav() {
                 const freq = getCurrentFreq();
+                const duration = getDuration();
                 const sampleRate = 44100;
-                const duration = 60;
                 const numSamples = Math.floor(sampleRate * duration);
                 const amplitude = 0.6;
+
+                if (numSamples < 1) return;
 
                 const buffer = new Float32Array(numSamples);
                 for (let i = 0; i < numSamples; i++) {
@@ -414,9 +465,9 @@
                     buffer[i] = amplitude * Math.sin(2 * Math.PI * freq * t);
                 }
 
-                // Плавное затухание на краях для бесшовного цикла
+                // Плавное затухание на краях для бесшовного цикла (если длительность > 0.5 сек)
                 const fadeSamples = Math.min(Math.floor(sampleRate * 0.01), Math.floor(numSamples / 20));
-                if (fadeSamples > 0) {
+                if (fadeSamples > 0 && numSamples > fadeSamples * 2) {
                     for (let i = 0; i < fadeSamples; i++) {
                         const gain = i / fadeSamples;
                         buffer[i] *= gain;
@@ -452,7 +503,8 @@
                 const a = document.createElement('a');
                 a.href = url;
                 const freqLabel = freq < 100 ? freq.toFixed(1) : Math.round(freq);
-                a.download = `sine_1min_${freqLabel}Hz.wav`;
+                const durLabel = duration;
+                a.download = `sine_${freqLabel}Hz_${durLabel}s.wav`;
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);
@@ -464,7 +516,6 @@
                 if (ignoreSliderUpdate) return;
                 const freq = getCurrentFreq();
                 updateDisplay(freq);
-                // Синхронизируем поле ввода
                 ignoreInputUpdate = true;
                 freqInput.value = Math.round(freq);
                 ignoreInputUpdate = false;
@@ -521,16 +572,23 @@
                 }
             });
 
+            durationInput.addEventListener('blur', function() {
+                let val = parseInt(durationInput.value);
+                if (isNaN(val) || val < MIN_DURATION) val = MIN_DURATION;
+                if (val > MAX_DURATION) val = MAX_DURATION;
+                durationInput.value = val;
+            });
+
             toggleBtn.addEventListener('click', toggleSound);
             toggleBtn.addEventListener('touchstart', function(e) {
                 e.preventDefault();
                 toggleSound();
             });
 
-            downloadBtn.addEventListener('click', downloadLoopWav);
+            downloadBtn.addEventListener('click', downloadWav);
             downloadBtn.addEventListener('touchstart', function(e) {
                 e.preventDefault();
-                downloadLoopWav();
+                downloadWav();
             });
 
             slider.addEventListener('touchstart', function(e) {
@@ -551,6 +609,7 @@
             const initialFreq = getCurrentFreq();
             updateDisplay(initialFreq);
             freqInput.value = Math.round(initialFreq);
+            durationInput.value = 60;
         })();
     </script>
 </body>
