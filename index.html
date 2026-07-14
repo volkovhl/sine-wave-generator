@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
+    <title>Генератор синуса + точный ввод</title>
+    <meta name="description" content="Генератор чистого синуса 20–20000 Гц с ползунком и точным вводом частоты, скачивание WAV 1 минута.">
+    <link rel="icon" href="data:image/svg+xml,&lt;svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'&gt;&lt;text y='.9em' font-size='90'&gt;〰️&lt;/text&gt;&lt;/svg&gt;">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        html, body {
+            height: 100%;
+            height: 100dvh;
+            overflow: hidden;
+        }
+        body {
+            background: #0b0e14;
+            color: #ffffff;
+            font-family: -apple-system, 'Segoe UI', Roboto, sans-serif;
+            display: flex;
+            flex-direction: column;
+            padding: 6px 10px 4px 10px;
+            touch-action: none;
+        }
+        .main-wrapper {
+            flex: 1 1 auto;
+            min-height: 0;
+            width: 100%;
+            max-width: 750px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            margin: 0 auto;
+            padding: 2px 0;
+        }
+        .freq-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            flex-shrink: 0;
+            margin-top: 0;
+            flex-wrap: wrap;
+        }
+        #freqDisplay {
+            font-size: clamp(32px, 10vw, 56px);
+            font-weight: 700;
+            letter-spacing: 1px;
+            color: #e8e8e8;
+            text-shadow: 0 0 20px rgba(100, 200, 255, 0.15);
+            line-height: 1.2;
+        }
+        #freqUnit {
+            font-size: 0.4em;
+            font-weight: 400;
+            color: #8899aa;
+            margin-left: 4px;
+        }
+        #freqInput {
+            background: #1a2a3a;
+            border: 2px solid #4a6a8a;
+            border-radius: 12px;
+            color: #fff;
+            font-size: clamp(20px, 5vw, 32px);
+            font-weight: 600;
+            width: clamp(80px, 20vw, 140px);
+            padding: 4px 8px;
+            text-align: center;
+            outline: none;
+            transition: border-color 0.2s;
+            font-family: inherit;
+            -moz-appearance: textfield;
+        }
+        #freqInput::-webkit-outer-spin-button,
+        #freqInput::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        #freqInput:focus {
+            border-color: #8ecae6;
+            box-shadow: 0 0 20px rgba(100, 200, 255, 0.2);
+        }
+        #sliderWrapper {
+            flex: 1 1 auto;
+            width: 100%;
+            min-height: 30px;
+            touch-action: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+        #freqSlider {
+            width: min(65vh, 80%);
+            height: 38px;
+            -webkit-appearance: none;
+            appearance: none;
+            border-radius: 19px;
+            background: linear-gradient(to right, #4a6fa5, #8ecae6, #f9c74f, #f9844a, #e63946);
+            outline: none;
+            cursor: pointer;
+            touch-action: none;
+            transform: rotate(-90deg);
+        }
+        #freqSlider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, #f0f9ff, #b0c4de);
+            box-shadow: 0 0 20px rgba(100, 180, 255, 0.5), 0 4px 12px rgba(0, 0, 0, 0.5);
+            border: 2px solid #ffffff88;
+            transition: 0.1s;
+            touch-action: none;
+        }
+        #freqSlider::-webkit-slider-thumb:active {
+            transform: scale(1.15);
+            box-shadow: 0 0 30px rgba(100, 180, 255, 0.8);
+        }
+        #freqSlider::-moz-range-thumb {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, #f0f9ff, #b0c4de);
+            box-shadow: 0 0 20px rgba(100, 180, 255, 0.5);
+            border: 2px solid #ffffff88;
+            cursor: pointer;
+            touch-action: none;
+        }
+        .controls-row {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            flex-shrink: 0;
+            margin-bottom: 2px;
+        }
+        #toggleBtn {
+            background: #2a3a4a;
+            border: none;
+            color: #fff;
+            font-size: clamp(16px, 4vw, 20px);
+            font-weight: 600;
+            padding: 10px 28px;
+            border-radius: 50px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+            letter-spacing: 1px;
+            transition: all 0.25s ease;
+            touch-action: manipulation;
+            cursor: pointer;
+            border: 1px solid #4a6a8a;
+            flex: 0 1 auto;
+        }
+        #toggleBtn:active {
+            transform: scale(0.94);
+        }
+        #toggleBtn.active {
+            background: #4a8a6a;
+            border-color: #6ab08a;
+            box-shadow: 0 0 30px rgba(74, 138, 106, 0.4);
+        }
+        #downloadBtn {
+            background: #3a3f5a;
+            border: none;
+            color: #fff;
+            font-size: clamp(16px, 4vw, 20px);
+            font-weight: 600;
+            padding: 10px 28px;
+            border-radius: 50px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+            letter-spacing: 1px;
+            transition: all 0.25s ease;
+            touch-action: manipulation;
+            cursor: pointer;
+            border: 1px solid #6a7a9a;
+            flex: 0 1 auto;
+        }
+        #downloadBtn:active {
+            transform: scale(0.94);
+        }
+        #hint {
+            font-size: clamp(11px, 2.5vw, 13px);
+            color: #556677;
+            letter-spacing: 0.5px;
+            flex-shrink: 0;
+            margin-top: 0;
+            margin-bottom: 1px;
+        }
+        .footer-links {
+            flex: 0 0 auto;
+            text-align: center;
+            font-size: clamp(12px, 2.8vw, 14px);
+            border-top: 1px solid #2a4b62;
+            padding: 10px 0 4px 0;
+            width: 100%;
+            max-width: 750px;
+            margin: 0 auto;
+            background: #0b0e14;
+        }
+        .footer-links a {
+            color: #7a5a3a;
+            text-decoration: none;
+            margin: 0 8px;
+        }
+        .footer-links a:hover {
+            text-decoration: underline;
+        }
+        @media (max-height: 600px) {
+            #freqSlider { height: 30px; width: min(55vh, 70%); }
+            #freqSlider::-webkit-slider-thumb { width: 26px; height: 26px; }
+            #toggleBtn, #downloadBtn { padding: 8px 20px; font-size: 15px; }
+            .footer-links { padding-top: 6px; font-size: 11px; }
+            #freqInput { font-size: 20px; width: 80px; padding: 2px 6px; }
+        }
+        @media (max-height: 480px) {
+            #freqSlider { height: 24px; width: min(45vh, 60%); }
+            #freqSlider::-webkit-slider-thumb { width: 22px; height: 22px; }
+            #toggleBtn, #downloadBtn { padding: 6px 16px; font-size: 13px; }
+            #freqDisplay { font-size: 28px; }
+            #hint { font-size: 10px; }
+            #freqInput { font-size: 16px; width: 70px; padding: 2px 4px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="main-wrapper">
+        <div class="freq-row">
+            <div id="freqDisplay">
+                <span id="freqValue">1000</span><span id="freqUnit">Гц</span>
+            </div>
+            <input type="number" id="freqInput" min="20" max="20000" step="1" value="1000">
+        </div>
+        <div id="sliderWrapper">
+            <input type="range" id="freqSlider" min="0" max="1" step="0.0005" value="0.5">
+        </div>
+        <div class="controls-row">
+            <button id="toggleBtn">▶ Включить</button>
+            <button id="downloadBtn">⬇ WAV (1 min)</button>
+        </div>
+        <div id="hint">тяните вверх‑вниз или введите частоту</div>
+    </div>
+    <div class="footer-links">
+        <a href="https://volkovhl.github.io/" target="_blank">volkovhl.github.io</a> |
+        <a href="https://www.youtube.com/@Pavel_Volkov" target="_blank">Дела Техники</a>
+    </div>
+    <script>
+        (function() {
+            'use strict';
+
+            const slider = document.getElementById('freqSlider');
+            const freqValue = document.getElementById('freqValue');
+            const freqInput = document.getElementById('freqInput');
+            const toggleBtn = document.getElementById('toggleBtn');
+            const downloadBtn = document.getElementById('downloadBtn');
+
+            let audioCtx = null;
+            let oscillator = null;
+            let gainNode = null;
+            let isPlaying = false;
+            let ignoreSliderUpdate = false;
+            let ignoreInputUpdate = false;
+
+            const MIN_FREQ = 20;
+            const MAX_FREQ = 20000;
+            const RATIO = MAX_FREQ / MIN_FREQ;
+
+            function sliderToFreq(val) {
+                return MIN_FREQ * Math.pow(RATIO, val);
+            }
+
+            function freqToSlider(freq) {
+                return Math.log(freq / MIN_FREQ) / Math.log(RATIO);
+            }
+
+            function getCurrentFreq() {
+                return sliderToFreq(parseFloat(slider.value));
+            }
+
+            function clampFreq(freq) {
+                return Math.min(MAX_FREQ, Math.max(MIN_FREQ, freq));
+            }
+
+            function updateDisplay(freq) {
+                let display;
+                if (freq < 100) {
+                    display = freq.toFixed(1);
+                } else {
+                    display = Math.round(freq);
+                }
+                freqValue.textContent = display;
+                // Обновляем поле ввода, но без зацикливания
+                if (!ignoreInputUpdate) {
+                    ignoreInputUpdate = true;
+                    freqInput.value = Math.round(freq);
+                    ignoreInputUpdate = false;
+                }
+            }
+
+            function updateFromSlider() {
+                if (ignoreSliderUpdate) return;
+                const freq = getCurrentFreq();
+                updateDisplay(freq);
+                // Обновляем ползунок, если нужно
+                if (!ignoreSliderUpdate) {
+                    ignoreSliderUpdate = true;
+                    // ползунок уже обновлён, ничего не делаем
+                    ignoreSliderUpdate = false;
+                }
+                if (isPlaying && oscillator) {
+                    try {
+                        oscillator.frequency.setTargetAtTime(freq, audioCtx.currentTime, 0.01);
+                    } catch (e) {
+                        oscillator.frequency.value = freq;
+                    }
+                }
+            }
+
+            function updateFromInput() {
+                if (ignoreInputUpdate) return;
+                let val = parseFloat(freqInput.value);
+                if (isNaN(val) || val < MIN_FREQ) val = MIN_FREQ;
+                if (val > MAX_FREQ) val = MAX_FREQ;
+                const clamped = clampFreq(val);
+                if (clamped !== val) {
+                    freqInput.value = Math.round(clamped);
+                }
+                const sliderVal = freqToSlider(clamped);
+                ignoreSliderUpdate = true;
+                slider.value = sliderVal;
+                ignoreSliderUpdate = false;
+                updateDisplay(clamped);
+                if (isPlaying && oscillator) {
+                    try {
+                        oscillator.frequency.setTargetAtTime(clamped, audioCtx.currentTime, 0.01);
+                    } catch (e) {
+                        oscillator.frequency.value = clamped;
+                    }
+                }
+            }
+
+            function startSound() {
+                if (isPlaying) return;
+                try {
+                    if (!audioCtx) {
+                        audioCtx = new(window.AudioContext || window.webkitAudioContext)();
+                    }
+                    if (audioCtx.state === 'suspended') {
+                        audioCtx.resume();
+                    }
+                    oscillator = audioCtx.createOscillator();
+                    gainNode = audioCtx.createGain();
+                    oscillator.type = 'sine';
+                    oscillator.frequency.value = getCurrentFreq();
+                    gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioCtx.destination);
+                    oscillator.start(0);
+                    isPlaying = true;
+                    toggleBtn.textContent = '⏹ Выключить';
+                    toggleBtn.classList.add('active');
+                } catch (err) {
+                    console.warn('Ошибка запуска:', err);
+                }
+            }
+
+            function stopSound() {
+                if (!isPlaying) return;
+                try {
+                    if (oscillator) {
+                        oscillator.stop(0);
+                        oscillator.disconnect();
+                        oscillator = null;
+                    }
+                    if (gainNode) {
+                        gainNode.disconnect();
+                        gainNode = null;
+                    }
+                    isPlaying = false;
+                    toggleBtn.textContent = '▶ Включить';
+                    toggleBtn.classList.remove('active');
+                } catch (err) {
+                    console.warn('Ошибка остановки:', err);
+                }
+            }
+
+            function toggleSound() {
+                if (isPlaying) {
+                    stopSound();
+                } else {
+                    startSound();
+                }
+            }
+
+            // —————— СКАЧИВАНИЕ МИНУТНОГО ЗАЦИКЛЕННОГО WAV ——————
+            function downloadLoopWav() {
+                const freq = getCurrentFreq();
+                const sampleRate = 44100;
+                const duration = 60;
+                const numSamples = Math.floor(sampleRate * duration);
+                const amplitude = 0.6;
+
+                const buffer = new Float32Array(numSamples);
+                for (let i = 0; i < numSamples; i++) {
+                    const t = i / sampleRate;
+                    buffer[i] = amplitude * Math.sin(2 * Math.PI * freq * t);
+                }
+
+                // Плавное затухание на краях для бесшовного цикла
+                const fadeSamples = Math.min(Math.floor(sampleRate * 0.01), Math.floor(numSamples / 20));
+                if (fadeSamples > 0) {
+                    for (let i = 0; i < fadeSamples; i++) {
+                        const gain = i / fadeSamples;
+                        buffer[i] *= gain;
+                        buffer[numSamples - 1 - i] *= gain;
+                    }
+                }
+
+                const int16Buffer = new Int16Array(numSamples);
+                for (let i = 0; i < numSamples; i++) {
+                    const s = Math.max(-1, Math.min(1, buffer[i]));
+                    int16Buffer[i] = Math.floor(s * 0x7FFF);
+                }
+
+                const dataSize = int16Buffer.length * 2;
+                const header = new ArrayBuffer(44);
+                const view = new DataView(header);
+                view.setUint32(0, 0x52494646, false);
+                view.setUint32(4, 36 + dataSize, true);
+                view.setUint32(8, 0x57415645, false);
+                view.setUint32(12, 0x666D7420, false);
+                view.setUint32(16, 16, true);
+                view.setUint16(20, 1, true);
+                view.setUint16(22, 1, true);
+                view.setUint32(24, sampleRate, true);
+                view.setUint32(28, sampleRate * 2, true);
+                view.setUint16(32, 2, true);
+                view.setUint16(34, 16, true);
+                view.setUint32(36, 0x64617461, false);
+                view.setUint32(40, dataSize, true);
+
+                const wavBlob = new Blob([header, int16Buffer.buffer], { type: 'audio/wav' });
+                const url = URL.createObjectURL(wavBlob);
+                const a = document.createElement('a');
+                a.href = url;
+                const freqLabel = freq < 100 ? freq.toFixed(1) : Math.round(freq);
+                a.download = `sine_1min_${freqLabel}Hz.wav`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                setTimeout(() => URL.revokeObjectURL(url), 5000);
+            }
+
+            // —————— События ——————
+            slider.addEventListener('input', function() {
+                if (ignoreSliderUpdate) return;
+                const freq = getCurrentFreq();
+                updateDisplay(freq);
+                // Синхронизируем поле ввода
+                ignoreInputUpdate = true;
+                freqInput.value = Math.round(freq);
+                ignoreInputUpdate = false;
+                if (isPlaying && oscillator) {
+                    try {
+                        oscillator.frequency.setTargetAtTime(freq, audioCtx.currentTime, 0.01);
+                    } catch (e) {
+                        oscillator.frequency.value = freq;
+                    }
+                }
+            });
+
+            freqInput.addEventListener('input', function() {
+                if (ignoreInputUpdate) return;
+                let val = parseFloat(freqInput.value);
+                if (isNaN(val)) return;
+                if (val < MIN_FREQ) val = MIN_FREQ;
+                if (val > MAX_FREQ) val = MAX_FREQ;
+                const clamped = clampFreq(val);
+                const sliderVal = freqToSlider(clamped);
+                ignoreSliderUpdate = true;
+                slider.value = sliderVal;
+                ignoreSliderUpdate = false;
+                updateDisplay(clamped);
+                if (isPlaying && oscillator) {
+                    try {
+                        oscillator.frequency.setTargetAtTime(clamped, audioCtx.currentTime, 0.01);
+                    } catch (e) {
+                        oscillator.frequency.value = clamped;
+                    }
+                }
+            });
+
+            freqInput.addEventListener('blur', function() {
+                let val = parseFloat(freqInput.value);
+                if (isNaN(val) || val < MIN_FREQ) {
+                    val = MIN_FREQ;
+                } else if (val > MAX_FREQ) {
+                    val = MAX_FREQ;
+                }
+                const clamped = clampFreq(val);
+                freqInput.value = Math.round(clamped);
+                const sliderVal = freqToSlider(clamped);
+                ignoreSliderUpdate = true;
+                slider.value = sliderVal;
+                ignoreSliderUpdate = false;
+                updateDisplay(clamped);
+                if (isPlaying && oscillator) {
+                    try {
+                        oscillator.frequency.setTargetAtTime(clamped, audioCtx.currentTime, 0.01);
+                    } catch (e) {
+                        oscillator.frequency.value = clamped;
+                    }
+                }
+            });
+
+            toggleBtn.addEventListener('click', toggleSound);
+            toggleBtn.addEventListener('touchstart', function(e) {
+                e.preventDefault();
+                toggleSound();
+            });
+
+            downloadBtn.addEventListener('click', downloadLoopWav);
+            downloadBtn.addEventListener('touchstart', function(e) {
+                e.preventDefault();
+                downloadLoopWav();
+            });
+
+            slider.addEventListener('touchstart', function(e) {
+                if (!isPlaying) {
+                    setTimeout(() => {
+                        if (!isPlaying) startSound();
+                    }, 50);
+                }
+            }, { passive: true });
+
+            document.addEventListener('visibilitychange', function() {
+                if (document.hidden && isPlaying) {
+                    stopSound();
+                }
+            });
+
+            // Инициализация
+            const initialFreq = getCurrentFreq();
+            updateDisplay(initialFreq);
+            freqInput.value = Math.round(initialFreq);
+        })();
+    </script>
+</body>
+</html>
