@@ -80,7 +80,7 @@
             color: #fff;
             font-size: clamp(20px, 5vw, 32px);
             font-weight: 600;
-            width: clamp(80px, 20vw, 140px);
+            width: clamp(100px, 22vw, 160px);
             padding: 4px 8px;
             text-align: center;
             outline: none;
@@ -212,7 +212,7 @@
             color: #fff;
             font-size: clamp(16px, 4vw, 22px);
             font-weight: 600;
-            width: clamp(60px, 15vw, 100px);
+            width: clamp(70px, 16vw, 110px);
             text-align: center;
             outline: none;
             font-family: inherit;
@@ -307,13 +307,13 @@
 
             #freqInput {
                 font-size: 20px;
-                width: 80px;
+                width: 90px;
                 padding: 2px 6px;
             }
 
             #durationInput {
                 font-size: 16px;
-                width: 60px;
+                width: 70px;
             }
 
             .duration-group {
@@ -348,13 +348,13 @@
 
             #freqInput {
                 font-size: 16px;
-                width: 70px;
+                width: 80px;
                 padding: 2px 4px;
             }
 
             #durationInput {
                 font-size: 14px;
-                width: 50px;
+                width: 60px;
             }
 
             .duration-group {
@@ -368,9 +368,9 @@
     <div class="main-wrapper">
         <div class="freq-row">
             <div id="freqDisplay">
-                <span id="freqValue">1000</span><span id="freqUnit">Гц</span>
+                <span id="freqValue">1000.0</span><span id="freqUnit">Гц</span>
             </div>
-            <input type="number" id="freqInput" min="0" max="20000" step="1" value="1000">
+            <input type="number" id="freqInput" min="0" max="20000" step="0.1" value="1000">
         </div>
         <div id="sliderWrapper">
             <input type="range" id="freqSlider" min="0" max="1" step="0.0005" value="0.5">
@@ -379,7 +379,7 @@
             <button id="toggleBtn">▶ Включить</button>
             <div class="duration-group">
                 <label>⏱</label>
-                <input type="number" id="durationInput" min="1" max="1000" step="1" value="60">
+                <input type="number" id="durationInput" min="0.1" max="1000" step="0.1" value="60">
                 <span>с</span>
             </div>
             <button id="downloadBtn">⬇ WAV</button>
@@ -410,13 +410,13 @@
 
             const MIN_FREQ = 0;
             const MAX_FREQ = 20000;
-            // Для логарифмической шкалы используем 1 Гц как нижнюю границу (0 Гц — особый случай)
             const LOG_MIN = 1;
             const RATIO = MAX_FREQ / LOG_MIN;
 
+            let exactFreq = 1000;
+
             function sliderToFreq(val) {
                 if (val === 0) return 0;
-                // Логарифмическая шкала от 1 до 20000 Гц
                 return LOG_MIN * Math.pow(RATIO, val);
             }
 
@@ -426,13 +426,17 @@
                 return Math.log(clamped / LOG_MIN) / Math.log(RATIO);
             }
 
-            function getCurrentFreq() {
+            function getSliderFreq() {
                 return sliderToFreq(parseFloat(slider.value));
             }
 
+            function getCurrentFreq() {
+                return exactFreq;
+            }
+
             function getDuration() {
-                let val = parseInt(durationInput.value);
-                if (isNaN(val) || val < 1) val = 1;
+                let val = parseFloat(durationInput.value);
+                if (isNaN(val) || val < 0.1) val = 0.1;
                 if (val > 1000) val = 1000;
                 return val;
             }
@@ -441,53 +445,84 @@
                 return Math.min(MAX_FREQ, Math.max(MIN_FREQ, freq));
             }
 
+            function roundFreq(freq) {
+                return Math.round(freq * 10) / 10;
+            }
+
             function updateDisplay(freq) {
-                let display;
-                if (freq === 0) {
-                    display = '0';
-                } else if (freq < 100) {
-                    display = freq.toFixed(1);
+                const rounded = roundFreq(freq);
+                if (rounded === 0) {
+                    freqValue.textContent = '0.0';
                 } else {
-                    display = Math.round(freq);
+                    freqValue.textContent = rounded.toFixed(1);
                 }
-                freqValue.textContent = display;
                 if (!ignoreInputUpdate) {
                     ignoreInputUpdate = true;
-                    freqInput.value = Math.round(freq);
+                    freqInput.value = rounded.toFixed(1);
                     ignoreInputUpdate = false;
                 }
             }
 
             function updateFromSlider() {
                 if (ignoreSliderUpdate) return;
-                const freq = getCurrentFreq();
+                const freq = getSliderFreq();
+                exactFreq = freq;
                 updateDisplay(freq);
                 if (isPlaying && oscillator) {
                     try {
-                        oscillator.frequency.setTargetAtTime(freq, audioCtx.currentTime, 0.01);
+                        oscillator.frequency.setTargetAtTime(freq > 0 ? freq : 1, audioCtx.currentTime, 0.01);
+                        gainNode.gain.setTargetAtTime(freq > 0 ? 0.3 : 0, audioCtx.currentTime, 0.01);
                     } catch (e) {
-                        oscillator.frequency.value = freq;
+                        oscillator.frequency.value = freq > 0 ? freq : 1;
+                        gainNode.gain.value = freq > 0 ? 0.3 : 0;
                     }
                 }
             }
 
+            // ОСНОВНОЕ ИСПРАВЛЕНИЕ: проверка на пустой ввод и корректный парсинг
             function updateFromInput() {
                 if (ignoreInputUpdate) return;
-                let val = parseFloat(freqInput.value);
-                if (isNaN(val)) return;
+
+                const rawValue = freqInput.value.trim();
+
+                // Если поле пустое — ничего не делаем, ждём продолжения ввода
+                if (rawValue === '' || rawValue === '-') {
+                    return;
+                }
+
+                let val = parseFloat(rawValue);
+
+                // Если парсинг не удался — игнорируем
+                if (isNaN(val)) {
+                    return;
+                }
+
+                // Если в процессе ввода пользователь вводит число с точкой,
+                // но оно ещё не закончено (например, "3520.") — не трогаем
+                if (rawValue.endsWith('.') || rawValue.endsWith(',')) {
+                    return;
+                }
+
                 if (val < MIN_FREQ) val = MIN_FREQ;
                 if (val > MAX_FREQ) val = MAX_FREQ;
+
                 const clamped = clampFreq(val);
+                exactFreq = clamped;
+
                 const sliderVal = freqToSlider(clamped);
                 ignoreSliderUpdate = true;
                 slider.value = sliderVal;
                 ignoreSliderUpdate = false;
+
                 updateDisplay(clamped);
+
                 if (isPlaying && oscillator) {
                     try {
-                        oscillator.frequency.setTargetAtTime(clamped, audioCtx.currentTime, 0.01);
+                        oscillator.frequency.setTargetAtTime(clamped > 0 ? clamped : 1, audioCtx.currentTime, 0.01);
+                        gainNode.gain.setTargetAtTime(clamped > 0 ? 0.3 : 0, audioCtx.currentTime, 0.01);
                     } catch (e) {
-                        oscillator.frequency.value = clamped;
+                        oscillator.frequency.value = clamped > 0 ? clamped : 1;
+                        gainNode.gain.value = clamped > 0 ? 0.3 : 0;
                     }
                 }
             }
@@ -505,7 +540,7 @@
                     gainNode = audioCtx.createGain();
                     oscillator.type = 'sine';
                     const freq = getCurrentFreq();
-                    oscillator.frequency.value = freq > 0 ? freq : 1; // Web Audio не поддерживает 0 Гц
+                    oscillator.frequency.value = freq > 0 ? freq : 1;
                     gainNode.gain.setValueAtTime(freq > 0 ? 0.3 : 0, audioCtx.currentTime);
                     oscillator.connect(gainNode);
                     gainNode.connect(audioCtx.destination);
@@ -546,7 +581,6 @@
                 }
             }
 
-            // —————— СКАЧИВАНИЕ WAV ——————
             function downloadWav() {
                 const freq = getCurrentFreq();
                 const duration = getDuration();
@@ -554,45 +588,25 @@
                 const numSamples = Math.floor(sampleRate * duration);
                 const amplitude = 0.6;
 
-                if (numSamples < 1 || freq === 0) {
-                    // Для 0 Гц создаём тишину
-                    const buffer = new Float32Array(numSamples);
-                    const int16Buffer = new Int16Array(numSamples);
-                    const dataSize = int16Buffer.length * 2;
-                    const header = new ArrayBuffer(44);
-                    const view = new DataView(header);
-                    view.setUint32(0, 0x52494646, false);
-                    view.setUint32(4, 36 + dataSize, true);
-                    view.setUint32(8, 0x57415645, false);
-                    view.setUint32(12, 0x666D7420, false);
-                    view.setUint32(16, 16, true);
-                    view.setUint16(20, 1, true);
-                    view.setUint16(22, 1, true);
-                    view.setUint32(24, sampleRate, true);
-                    view.setUint32(28, sampleRate * 2, true);
-                    view.setUint16(32, 2, true);
-                    view.setUint16(34, 16, true);
-                    view.setUint32(36, 0x64617461, false);
-                    view.setUint32(40, dataSize, true);
-                    const wavBlob = new Blob([header, int16Buffer.buffer], { type: 'audio/wav' });
-                    const url = URL.createObjectURL(wavBlob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `sine_0Hz_${duration}s.wav`;
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                    setTimeout(() => URL.revokeObjectURL(url), 5000);
+                if (numSamples < 1) {
+                    alert('Слишком короткая длительность');
                     return;
                 }
 
                 const buffer = new Float32Array(numSamples);
-                for (let i = 0; i < numSamples; i++) {
-                    const t = i / sampleRate;
-                    buffer[i] = amplitude * Math.sin(2 * Math.PI * freq * t);
+
+                if (freq === 0) {
+                    for (let i = 0; i < numSamples; i++) {
+                        buffer[i] = 0;
+                    }
+                } else {
+                    for (let i = 0; i < numSamples; i++) {
+                        const t = i / sampleRate;
+                        buffer[i] = amplitude * Math.sin(2 * Math.PI * freq * t);
+                    }
                 }
 
-                const fadeSamples = Math.min(Math.floor(sampleRate * 0.01), Math.floor(numSamples / 20));
+                const fadeSamples = Math.min(Math.floor(sampleRate * 0.01), Math.floor(numSamples / 10));
                 if (fadeSamples > 0 && numSamples > fadeSamples * 2) {
                     for (let i = 0; i < fadeSamples; i++) {
                         const gain = i / fadeSamples;
@@ -628,8 +642,11 @@
                 const url = URL.createObjectURL(wavBlob);
                 const a = document.createElement('a');
                 a.href = url;
-                const freqLabel = freq < 100 ? freq.toFixed(1) : Math.round(freq);
-                a.download = `sine_${freqLabel}Hz_${duration}s.wav`;
+
+                const freqLabel = freq === 0 ? '0.0' : freq.toFixed(1);
+                const durLabel = duration.toFixed(1);
+                a.download = `sine_${freqLabel}Hz_${durLabel}s.wav`;
+
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);
@@ -639,11 +656,9 @@
             // —————— События ——————
             slider.addEventListener('input', function () {
                 if (ignoreSliderUpdate) return;
-                const freq = getCurrentFreq();
+                const freq = getSliderFreq();
+                exactFreq = freq;
                 updateDisplay(freq);
-                ignoreInputUpdate = true;
-                freqInput.value = Math.round(freq);
-                ignoreInputUpdate = false;
                 if (isPlaying && oscillator) {
                     try {
                         oscillator.frequency.setTargetAtTime(freq > 0 ? freq : 1, audioCtx.currentTime, 0.01);
@@ -655,18 +670,44 @@
                 }
             });
 
+            // Используем 'input' для обновления в реальном времени
             freqInput.addEventListener('input', function () {
                 if (ignoreInputUpdate) return;
-                let val = parseFloat(freqInput.value);
+
+                const rawValue = freqInput.value.trim();
+
+                // Если поле пустое или содержит только точку/запятую — ничего не делаем
+                if (rawValue === '' || rawValue === '.' || rawValue === ',' || rawValue === '-') {
+                    return;
+                }
+
+                let val = parseFloat(rawValue);
                 if (isNaN(val)) return;
+
+                // Если в процессе ввода точка в конце — не обновляем слайдер
+                if (rawValue.endsWith('.') || rawValue.endsWith(',')) {
+                    return;
+                }
+
                 if (val < MIN_FREQ) val = MIN_FREQ;
                 if (val > MAX_FREQ) val = MAX_FREQ;
+
                 const clamped = clampFreq(val);
+                exactFreq = clamped;
+
                 const sliderVal = freqToSlider(clamped);
                 ignoreSliderUpdate = true;
                 slider.value = sliderVal;
                 ignoreSliderUpdate = false;
-                updateDisplay(clamped);
+
+                // Обновляем отображение без изменения поля ввода
+                const rounded = roundFreq(clamped);
+                if (rounded === 0) {
+                    freqValue.textContent = '0.0';
+                } else {
+                    freqValue.textContent = rounded.toFixed(1);
+                }
+
                 if (isPlaying && oscillator) {
                     try {
                         oscillator.frequency.setTargetAtTime(clamped > 0 ? clamped : 1, audioCtx.currentTime, 0.01);
@@ -678,20 +719,35 @@
                 }
             });
 
+            // Событие blur — финализируем ввод
             freqInput.addEventListener('blur', function () {
-                let val = parseFloat(freqInput.value);
-                if (isNaN(val) || val < MIN_FREQ) {
-                    val = MIN_FREQ;
-                } else if (val > MAX_FREQ) {
-                    val = MAX_FREQ;
+                const rawValue = freqInput.value.trim();
+
+                // Если поле пустое — ставим последнее корректное значение
+                if (rawValue === '' || rawValue === '.' || rawValue === ',' || rawValue === '-') {
+                    updateDisplay(exactFreq);
+                    return;
                 }
+
+                let val = parseFloat(rawValue);
+                if (isNaN(val)) {
+                    updateDisplay(exactFreq);
+                    return;
+                }
+
+                if (val < MIN_FREQ) val = MIN_FREQ;
+                if (val > MAX_FREQ) val = MAX_FREQ;
+
                 const clamped = clampFreq(val);
-                freqInput.value = Math.round(clamped);
+                exactFreq = clamped;
+
                 const sliderVal = freqToSlider(clamped);
                 ignoreSliderUpdate = true;
                 slider.value = sliderVal;
                 ignoreSliderUpdate = false;
+
                 updateDisplay(clamped);
+
                 if (isPlaying && oscillator) {
                     try {
                         oscillator.frequency.setTargetAtTime(clamped > 0 ? clamped : 1, audioCtx.currentTime, 0.01);
@@ -704,10 +760,17 @@
             });
 
             durationInput.addEventListener('blur', function () {
-                let val = parseInt(durationInput.value);
-                if (isNaN(val) || val < 1) val = 1;
+                let val = parseFloat(durationInput.value);
+                if (isNaN(val) || val < 0.1) val = 0.1;
                 if (val > 1000) val = 1000;
-                durationInput.value = val;
+                durationInput.value = val.toFixed(1);
+            });
+
+            durationInput.addEventListener('input', function () {
+                let val = parseFloat(durationInput.value);
+                if (isNaN(val)) return;
+                if (val < 0.1) val = 0.1;
+                if (val > 1000) val = 1000;
             });
 
             toggleBtn.addEventListener('click', toggleSound);
@@ -737,10 +800,9 @@
             });
 
             // Инициализация
-            const initialFreq = getCurrentFreq();
-            updateDisplay(initialFreq);
-            freqInput.value = Math.round(initialFreq);
-            durationInput.value = 60;
+            exactFreq = 1000;
+            updateDisplay(1000);
+            durationInput.value = '60.0';
         })();
     </script>
 </body>
