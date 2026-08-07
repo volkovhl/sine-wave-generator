@@ -4,7 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
-    <meta name="description" content="Генератор синуса 0–20000 Гц с точным вводом частоты и длительности WAV. Выбор шкалы: логарифмическая (A) или линейная (B).">
+    <meta name="description"
+        content="Генератор синуса 0–20000 Гц с точным вводом частоты и длительности WAV. Выбор шкалы: логарифмическая (A) или линейная (B).">
     <meta name="author" content="Pavel Volkov / volkovhl.github.io">
     <title>Генератор синуса 0–20000 Гц — логарифмическая и линейная шкала</title>
     <link rel="icon"
@@ -113,7 +114,6 @@
             gap: 12px;
         }
 
-        /* Вертикальные кнопки шкалы с крупными подписями */
         .scale-group {
             display: flex;
             flex-direction: column;
@@ -185,27 +185,61 @@
             width: 32px;
             height: 32px;
             border-radius: 50%;
-            background: radial-gradient(circle at 30% 30%, #f0f9ff, #b0c4de);
-            box-shadow: 0 0 20px rgba(100, 180, 255, 0.5), 0 4px 12px rgba(0, 0, 0, 0.5);
-            border: 2px solid #ffffff88;
+            background: #ffffff;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.6), 0 4px 12px rgba(0, 0, 0, 0.5);
+            border: 2px solid #ffffff;
             transition: 0.1s;
             touch-action: none;
         }
 
         #freqSlider::-webkit-slider-thumb:active {
             transform: scale(1.15);
-            box-shadow: 0 0 30px rgba(100, 180, 255, 0.8);
+            box-shadow: 0 0 30px rgba(255, 255, 255, 0.9);
         }
 
         #freqSlider::-moz-range-thumb {
             width: 32px;
             height: 32px;
             border-radius: 50%;
-            background: radial-gradient(circle at 30% 30%, #f0f9ff, #b0c4de);
-            box-shadow: 0 0 20px rgba(100, 180, 255, 0.5);
-            border: 2px solid #ffffff88;
+            background: #ffffff;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.6);
+            border: 2px solid #ffffff;
             cursor: pointer;
             touch-action: none;
+        }
+
+        .fine-tune-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            flex-shrink: 0;
+        }
+
+        .fine-btn {
+            background: #1a2a3a;
+            border: 2px solid #3a5a7a;
+            color: #ffffff;
+            background: #2a3f55;
+            font-size: clamp(12px, 1.8vw, 16px);
+            font-weight: 700;
+            padding: 6px 10px;
+            border-radius: 20px;
+            cursor: pointer;
+            touch-action: manipulation;
+            transition: all 0.15s;
+            font-family: inherit;
+            min-width: 48px;
+            text-align: center;
+            line-height: 1.3;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+            border-color: #5a7a9a;
+            background: #2a3f55;
+            color: #ffffff;
+        }
+
+        .fine-btn:active {
+            transform: scale(0.92);
+            background: #3a5a7a;
         }
 
         .controls-row {
@@ -233,6 +267,7 @@
             cursor: pointer;
             border: 1px solid #4a6a8a;
             flex: 0 1 auto;
+            min-width: 140px;
         }
 
         #toggleBtn:active {
@@ -243,6 +278,25 @@
             background: #4a8a6a;
             border-color: #6ab08a;
             box-shadow: 0 0 30px rgba(74, 138, 106, 0.4);
+        }
+
+        #toggleBtn.waiting {
+            background: #6a4a3a;
+            border-color: #8a6a4a;
+            box-shadow: 0 0 20px rgba(200, 150, 50, 0.2);
+            animation: pulse 1.2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.6;
+            }
         }
 
         .duration-group {
@@ -349,10 +403,20 @@
                 height: 26px;
             }
 
+            .fine-btn {
+                font-size: 11px;
+                padding: 4px 8px;
+                min-width: 36px;
+            }
+
             #toggleBtn,
             #downloadBtn {
                 padding: 8px 20px;
                 font-size: 15px;
+            }
+
+            #toggleBtn {
+                min-width: 110px;
             }
 
             .footer-links {
@@ -397,10 +461,20 @@
                 height: 22px;
             }
 
+            .fine-btn {
+                font-size: 10px;
+                padding: 3px 6px;
+                min-width: 30px;
+            }
+
             #toggleBtn,
             #downloadBtn {
                 padding: 6px 16px;
                 font-size: 13px;
+            }
+
+            #toggleBtn {
+                min-width: 90px;
             }
 
             #freqDisplay {
@@ -452,6 +526,18 @@
             .scale-btn .label {
                 font-size: 7px;
             }
+
+            .fine-btn {
+                font-size: 10px;
+                padding: 3px 6px;
+                min-width: 28px;
+            }
+
+            #toggleBtn {
+                min-width: 80px;
+                font-size: 14px;
+                padding: 8px 16px;
+            }
         }
     </style>
 </head>
@@ -466,7 +552,6 @@
         </div>
 
         <div id="sliderWrapper">
-            <!-- Вертикальные кнопки шкалы с крупными подписями -->
             <div class="scale-group">
                 <button class="scale-btn active" data-scale="log">
                     A
@@ -477,7 +562,13 @@
                     <span class="label">линейная</span>
                 </button>
             </div>
+
             <input type="range" id="freqSlider" min="0" max="1" step="0.0005" value="0.5">
+
+            <div class="fine-tune-group">
+                <button class="fine-btn" id="fineUp">+0.1</button>
+                <button class="fine-btn" id="fineDown">−0.1</button>
+            </div>
         </div>
 
         <div class="controls-row">
@@ -505,11 +596,14 @@
             const durationInput = document.getElementById('durationInput');
             const toggleBtn = document.getElementById('toggleBtn');
             const downloadBtn = document.getElementById('downloadBtn');
+            const fineUp = document.getElementById('fineUp');
+            const fineDown = document.getElementById('fineDown');
 
             let audioCtx = null;
             let oscillator = null;
             let gainNode = null;
             let isPlaying = false;
+            let isAudioReady = false;
             let ignoreSliderUpdate = false;
             let ignoreInputUpdate = false;
 
@@ -521,14 +615,23 @@
             let currentScale = 'log';
             let exactFreq = 1000;
 
-            // ----- Преобразования частоты <-> значение слайдера (0..1) -----
+            // --- переменные для ускоренного набора ---
+            let holdInterval = null;
+            let holdTimeout = null;
+            let holdDelta = 0.1;
+            let holdDirection = 0;
+            const HOLD_DELAY = 400;
+            const ACCEL_STEP = 0.1;
+            const ACCEL_MAX = 3.0;
+            const ACCEL_INTERVAL = 60;
+
+            // --- преобразования ---
             function sliderToFreq(val) {
                 if (val <= 0) return 0;
                 const v = Math.min(1, Math.max(0, val));
                 if (currentScale === 'log') {
                     return LOG_MIN * Math.pow(RATIO, v);
                 } else {
-                    // linear
                     return MIN_FREQ + v * (MAX_FREQ - MIN_FREQ);
                 }
             }
@@ -544,7 +647,6 @@
                 }
             }
 
-            // ----- Вспомогательные функции -----
             function getSliderFreq() {
                 return sliderToFreq(parseFloat(slider.value));
             }
@@ -593,26 +695,25 @@
             }
 
             function updateOscillatorFreq(freq) {
-                if (isPlaying && oscillator) {
+                if (isPlaying && oscillator && audioCtx) {
                     try {
-                        oscillator.frequency.setTargetAtTime(freq > 0 ? freq : 1, audioCtx.currentTime, 0.01);
+                        const targetFreq = freq > 0 ? freq : 1;
+                        oscillator.frequency.setTargetAtTime(targetFreq, audioCtx.currentTime, 0.01);
                         gainNode.gain.setTargetAtTime(freq > 0 ? 0.3 : 0, audioCtx.currentTime, 0.01);
                     } catch (e) {
+                        // fallback
                         oscillator.frequency.value = freq > 0 ? freq : 1;
                         gainNode.gain.value = freq > 0 ? 0.3 : 0;
                     }
                 }
             }
 
-            // ----- Изменение шкалы -----
             function setScale(scale) {
                 if (scale === currentScale) return;
                 currentScale = scale;
-
                 document.querySelectorAll('.scale-btn').forEach(btn => {
                     btn.classList.toggle('active', btn.dataset.scale === scale);
                 });
-
                 const freq = getCurrentFreq();
                 const sliderVal = freqToSlider(freq);
                 ignoreSliderUpdate = true;
@@ -620,7 +721,243 @@
                 ignoreSliderUpdate = false;
             }
 
-            // ----- События слайдера -----
+            // === Ускоренное изменение ===
+            function applyHoldDelta() {
+                let newFreq = getCurrentFreq() + holdDirection * holdDelta;
+                newFreq = Math.round(newFreq * 10) / 10;
+                if (newFreq < MIN_FREQ) newFreq = MIN_FREQ;
+                if (newFreq > MAX_FREQ) newFreq = MAX_FREQ;
+                const clamped = clampFreq(newFreq);
+                exactFreq = clamped;
+                const sliderVal = freqToSlider(clamped);
+                ignoreSliderUpdate = true;
+                slider.value = Math.min(1, Math.max(0, sliderVal));
+                ignoreSliderUpdate = false;
+                updateDisplay(clamped);
+                updateOscillatorFreq(clamped);
+                if (holdDelta < ACCEL_MAX) {
+                    holdDelta = Math.min(holdDelta + 0.06, ACCEL_MAX);
+                }
+            }
+
+            function startHold(direction) {
+                if (holdInterval) {
+                    clearInterval(holdInterval);
+                    holdInterval = null;
+                }
+                if (holdTimeout) {
+                    clearTimeout(holdTimeout);
+                    holdTimeout = null;
+                }
+                holdDirection = direction;
+                holdDelta = ACCEL_STEP;
+                applyHoldDelta();
+                holdTimeout = setTimeout(() => {
+                    holdTimeout = null;
+                    if (holdInterval) return;
+                    holdInterval = setInterval(() => {
+                        applyHoldDelta();
+                    }, ACCEL_INTERVAL);
+                }, HOLD_DELAY);
+            }
+
+            function stopHold() {
+                if (holdTimeout) {
+                    clearTimeout(holdTimeout);
+                    holdTimeout = null;
+                }
+                if (holdInterval) {
+                    clearInterval(holdInterval);
+                    holdInterval = null;
+                }
+                holdDirection = 0;
+                holdDelta = ACCEL_STEP;
+            }
+
+            function setupFineButton(btn, direction) {
+                btn.addEventListener('mousedown', function (e) {
+                    e.preventDefault();
+                    startHold(direction);
+                });
+                btn.addEventListener('touchstart', function (e) {
+                    e.preventDefault();
+                    startHold(direction);
+                }, {passive: false});
+
+                const stopEvents = ['mouseup', 'mouseleave', 'touchend', 'touchcancel'];
+                stopEvents.forEach(evt => {
+                    btn.addEventListener(evt, function (e) {
+                        e.preventDefault();
+                        stopHold();
+                    }, {passive: false});
+                });
+            }
+
+            setupFineButton(fineUp, 1);
+            setupFineButton(fineDown, -1);
+
+            // --- звук с гарантированным запуском с первого касания ---
+            function ensureAudioContext() {
+                if (!audioCtx) {
+                    try {
+                        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    } catch (e) {
+                        console.warn('AudioContext не поддерживается');
+                        return false;
+                    }
+                }
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+                return audioCtx.state === 'running' || audioCtx.state === 'suspended';
+            }
+
+            function createOscillatorNode() {
+                if (!audioCtx) return false;
+                try {
+                    if (oscillator) {
+                        try {oscillator.stop(0);} catch (e) { }
+                        oscillator.disconnect();
+                        oscillator = null;
+                    }
+                    if (gainNode) {
+                        gainNode.disconnect();
+                        gainNode = null;
+                    }
+                    oscillator = audioCtx.createOscillator();
+                    gainNode = audioCtx.createGain();
+                    oscillator.type = 'sine';
+                    const freq = getCurrentFreq();
+                    oscillator.frequency.value = freq > 0 ? freq : 1;
+                    gainNode.gain.setValueAtTime(freq > 0 ? 0.3 : 0, audioCtx.currentTime);
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioCtx.destination);
+                    oscillator.start(0);
+                    return true;
+                } catch (e) {
+                    console.warn('Ошибка создания осциллятора:', e);
+                    return false;
+                }
+            }
+
+            function startSound() {
+                if (isPlaying) return;
+
+                // Пытаемся возобновить контекст
+                if (!audioCtx || audioCtx.state === 'suspended') {
+                    if (!audioCtx) {
+                        try {
+                            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                        } catch (e) {
+                            console.warn('Не удалось создать AudioContext');
+                            toggleBtn.textContent = '⚠️ Ошибка';
+                            return;
+                        }
+                    }
+                    audioCtx.resume();
+                }
+
+                // Если контекст не запущен — помечаем ожидание
+                if (audioCtx.state !== 'running') {
+                    toggleBtn.textContent = '⏳ Ожидание...';
+                    toggleBtn.classList.add('waiting');
+                    // Пробуем снова через короткий интервал
+                    setTimeout(() => {
+                        if (!isPlaying) {
+                            startSound();
+                        }
+                    }, 100);
+                    return;
+                }
+
+                // Создаем осциллятор
+                if (!createOscillatorNode()) {
+                    toggleBtn.textContent = '⚠️ Ошибка';
+                    return;
+                }
+
+                isPlaying = true;
+                isAudioReady = true;
+                toggleBtn.textContent = '⏹ Выключить';
+                toggleBtn.classList.remove('waiting');
+                toggleBtn.classList.add('active');
+            }
+
+            function stopSound() {
+                if (!isPlaying) return;
+                try {
+                    if (oscillator) {
+                        try {oscillator.stop(0);} catch (e) { }
+                        oscillator.disconnect();
+                        oscillator = null;
+                    }
+                    if (gainNode) {
+                        gainNode.disconnect();
+                        gainNode = null;
+                    }
+                    isPlaying = false;
+                    toggleBtn.textContent = '▶ Включить';
+                    toggleBtn.classList.remove('active', 'waiting');
+                } catch (err) {
+                    console.warn('Ошибка остановки:', err);
+                    isPlaying = false;
+                    toggleBtn.textContent = '▶ Включить';
+                    toggleBtn.classList.remove('active', 'waiting');
+                }
+            }
+
+            function toggleSound() {
+                // Если звук играет — останавливаем
+                if (isPlaying) {
+                    stopSound();
+                    return;
+                }
+
+                // Иначе пытаемся включить
+                // Если контекст уже есть и он running — сразу запускаем
+                if (audioCtx && audioCtx.state === 'running') {
+                    startSound();
+                    return;
+                }
+
+                // В остальных случаях — создаем/возобновляем и запускаем
+                if (!audioCtx) {
+                    try {
+                        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    } catch (e) {
+                        toggleBtn.textContent = '⚠️ Ошибка';
+                        return;
+                    }
+                }
+
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                    // Ждем возобновления
+                    toggleBtn.textContent = '⏳ Ожидание...';
+                    toggleBtn.classList.add('waiting');
+                    // Попытка запуска после возобновления
+                    setTimeout(() => {
+                        if (!isPlaying) {
+                            if (audioCtx.state === 'running') {
+                                startSound();
+                            } else {
+                                // Повторная попытка
+                                toggleSound();
+                            }
+                        }
+                    }, 150);
+                    return;
+                }
+
+                // Если контекст running — запускаем
+                if (audioCtx.state === 'running') {
+                    startSound();
+                } else {
+                    toggleBtn.textContent = '⚠️ Ошибка';
+                }
+            }
+
+            // --- обработчик для слайдера с авто-включением ---
             slider.addEventListener('input', function () {
                 if (ignoreSliderUpdate) return;
                 const freq = getSliderFreq();
@@ -629,7 +966,7 @@
                 updateOscillatorFreq(freq);
             });
 
-            // ----- События ввода частоты -----
+            // --- ввод частоты ---
             freqInput.addEventListener('input', function () {
                 if (ignoreInputUpdate) return;
                 const rawValue = freqInput.value.trim();
@@ -641,15 +978,12 @@
                 if (val > MAX_FREQ) val = MAX_FREQ;
                 const clamped = clampFreq(val);
                 exactFreq = clamped;
-
                 const sliderVal = freqToSlider(clamped);
                 ignoreSliderUpdate = true;
                 slider.value = Math.min(1, Math.max(0, sliderVal));
                 ignoreSliderUpdate = false;
-
                 const rounded = roundFreq(clamped);
                 freqValue.textContent = rounded === 0 ? '0.0' : rounded.toFixed(1);
-
                 updateOscillatorFreq(clamped);
             });
 
@@ -676,62 +1010,7 @@
                 updateOscillatorFreq(clamped);
             });
 
-            // ----- Звук -----
-            function startSound() {
-                if (isPlaying) return;
-                try {
-                    if (!audioCtx) {
-                        audioCtx = new(window.AudioContext || window.webkitAudioContext)();
-                    }
-                    if (audioCtx.state === 'suspended') {
-                        audioCtx.resume();
-                    }
-                    oscillator = audioCtx.createOscillator();
-                    gainNode = audioCtx.createGain();
-                    oscillator.type = 'sine';
-                    const freq = getCurrentFreq();
-                    oscillator.frequency.value = freq > 0 ? freq : 1;
-                    gainNode.gain.setValueAtTime(freq > 0 ? 0.3 : 0, audioCtx.currentTime);
-                    oscillator.connect(gainNode);
-                    gainNode.connect(audioCtx.destination);
-                    oscillator.start(0);
-                    isPlaying = true;
-                    toggleBtn.textContent = '⏹ Выключить';
-                    toggleBtn.classList.add('active');
-                } catch (err) {
-                    console.warn('Ошибка запуска:', err);
-                }
-            }
-
-            function stopSound() {
-                if (!isPlaying) return;
-                try {
-                    if (oscillator) {
-                        oscillator.stop(0);
-                        oscillator.disconnect();
-                        oscillator = null;
-                    }
-                    if (gainNode) {
-                        gainNode.disconnect();
-                        gainNode = null;
-                    }
-                    isPlaying = false;
-                    toggleBtn.textContent = '▶ Включить';
-                    toggleBtn.classList.remove('active');
-                } catch (err) {
-                    console.warn('Ошибка остановки:', err);
-                }
-            }
-
-            function toggleSound() {
-                if (isPlaying) {
-                    stopSound();
-                } else {
-                    startSound();
-                }
-            }
-
-            // ----- Скачивание WAV -----
+            // --- WAV ---
             function downloadWav() {
                 const freq = getCurrentFreq();
                 const duration = getDuration();
@@ -789,22 +1068,20 @@
                 view.setUint32(36, 0x64617461, false);
                 view.setUint32(40, dataSize, true);
 
-                const wavBlob = new Blob([header, int16Buffer.buffer], { type: 'audio/wav' });
+                const wavBlob = new Blob([header, int16Buffer.buffer], {type: 'audio/wav'});
                 const url = URL.createObjectURL(wavBlob);
                 const a = document.createElement('a');
                 a.href = url;
-
                 const freqLabel = freq === 0 ? '0.0' : freq.toFixed(1);
                 const durLabel = duration.toFixed(1);
                 a.download = `sine_${freqLabel}Hz_${durLabel}s.wav`;
-
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);
                 setTimeout(() => URL.revokeObjectURL(url), 5000);
             }
 
-            // ----- Обработчики кнопок шкалы -----
+            // --- события кнопок шкалы ---
             document.querySelectorAll('.scale-btn').forEach(btn => {
                 btn.addEventListener('click', function () {
                     setScale(this.dataset.scale);
@@ -812,29 +1089,29 @@
                 btn.addEventListener('touchstart', function (e) {
                     e.preventDefault();
                     setScale(this.dataset.scale);
-                }, { passive: false });
+                }, {passive: false});
             });
 
-            // ----- Прочие события -----
+            // --- основные события ---
             toggleBtn.addEventListener('click', toggleSound);
             toggleBtn.addEventListener('touchstart', function (e) {
                 e.preventDefault();
                 toggleSound();
-            });
+            }, {passive: false});
 
             downloadBtn.addEventListener('click', downloadWav);
             downloadBtn.addEventListener('touchstart', function (e) {
                 e.preventDefault();
                 downloadWav();
-            });
+            }, {passive: false});
 
             slider.addEventListener('touchstart', function (e) {
                 if (!isPlaying) {
                     setTimeout(() => {
-                        if (!isPlaying) startSound();
+                        if (!isPlaying) toggleSound();
                     }, 50);
                 }
-            }, { passive: true });
+            }, {passive: true});
 
             document.addEventListener('visibilitychange', function () {
                 if (document.hidden && isPlaying) {
@@ -856,12 +1133,31 @@
                 if (val > 1000) val = 1000;
             });
 
-            // Инициализация
+            // инициализация
             exactFreq = 1000;
             updateDisplay(1000);
             durationInput.value = '60.0';
             const initSliderVal = freqToSlider(1000);
             slider.value = Math.min(1, Math.max(0, initSliderVal));
+
+            // Предварительно создаем аудиоконтекст при первом касании (не блокируем)
+            document.addEventListener('touchstart', function initAudio() {
+                if (!audioCtx) {
+                    try {
+                        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    } catch (e) { }
+                }
+                document.removeEventListener('touchstart', initAudio);
+            }, {once: true, passive: true});
+
+            document.addEventListener('click', function initAudioClick() {
+                if (!audioCtx) {
+                    try {
+                        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    } catch (e) { }
+                }
+                document.removeEventListener('click', initAudioClick);
+            }, {once: true, passive: true});
 
         })();
     </script>
