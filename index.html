@@ -11,7 +11,7 @@
     <link rel="icon"
         href="data:image/svg+xml,&lt;svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'&gt;&lt;text y='.9em' font-size='90'&gt;〰️&lt;/text&gt;&lt;/svg&gt;">
     <style>
-        /* Стили остались прежними, только добавил .wav-chip.small для компактности */
+        /* Все ваши стили остаются без изменений, кроме небольших дополнений для компактности чипов MP3 */
         * {
             margin: 0;
             padding: 0;
@@ -376,6 +376,53 @@
             transform: scale(0.94);
         }
 
+        /* ===== КНОПКА АЛИАСИНГ ===== */
+        .demo-row {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            flex-shrink: 0;
+            margin: 4px 0;
+        }
+
+        #demoBtn {
+            background: #2a1a3a;
+            border: 2px solid #8a4a6a;
+            color: #ddaacc;
+            font-size: clamp(14px, 3vw, 18px);
+            font-weight: 600;
+            padding: 8px 24px;
+            border-radius: 50px;
+            box-shadow: 0 0 20px rgba(200, 100, 255, 0.15);
+            letter-spacing: 0.5px;
+            transition: all 0.25s ease;
+            touch-action: manipulation;
+            cursor: pointer;
+            font-family: inherit;
+            flex: 0 1 auto;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        #demoBtn:hover {
+            background: #3a2a4a;
+            border-color: #aa6a8a;
+            box-shadow: 0 0 30px rgba(200, 100, 255, 0.3);
+            transform: scale(1.02);
+        }
+
+        #demoBtn:active {
+            transform: scale(0.94);
+        }
+
+        #demoBtn .icon {
+            font-size: 1.2em;
+        }
+
         /* ===== Панель выбора формата ===== */
         #wavPanel {
             position: fixed;
@@ -568,13 +615,19 @@
             }
 
             #toggleBtn,
-            #downloadBtn {
+            #downloadBtn,
+            #demoBtn {
                 padding: 8px 20px;
                 font-size: 15px;
             }
 
             #toggleBtn {
                 min-width: 110px;
+            }
+
+            #demoBtn {
+                font-size: 13px;
+                padding: 6px 16px;
             }
 
             .footer-links {
@@ -635,13 +688,19 @@
             }
 
             #toggleBtn,
-            #downloadBtn {
+            #downloadBtn,
+            #demoBtn {
                 padding: 6px 16px;
                 font-size: 13px;
             }
 
             #toggleBtn {
                 min-width: 90px;
+            }
+
+            #demoBtn {
+                font-size: 11px;
+                padding: 4px 12px;
             }
 
             #freqDisplay {
@@ -719,6 +778,11 @@
                 font-size: 14px;
                 padding: 8px 16px;
             }
+
+            #demoBtn {
+                font-size: 12px;
+                padding: 6px 14px;
+            }
         }
     </style>
 </head>
@@ -767,6 +831,14 @@
             </div>
             <button id="downloadBtn">⬇ Файл</button>
         </div>
+
+        <!-- НОВАЯ КНОПКА АЛИАСИНГ -->
+        <div class="demo-row">
+            <a href="aliasing-demo.html" id="demoBtn" target="_blank">
+                <span class="icon">🌀</span> Эффект Найквиста (Алиасинг)
+            </a>
+        </div>
+
         <div id="hint">тяните вверх‑вниз или введите частоту</div>
     </div>
 
