@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>Эффект Найквиста — визуальная демонстрация алиасинга | volkovhl</title>
     <meta name="description"
         content="Интерактивная демонстрация эффекта Найквиста (алиасинга). Увидьте, как 5 кГц превращается в 3 кГц при дискретизации 8 кГц. Наглядный пример теоремы Котельникова." />
@@ -35,6 +35,8 @@
             flex-direction: column;
             align-items: center;
             min-height: 100vh;
+            touch-action: pan-y;
+            /* разрешаем вертикальный скролл */
         }
 
         .container {
@@ -70,6 +72,13 @@
             font-weight: 700;
         }
 
+        .canvas-wrapper {
+            position: relative;
+            width: 100%;
+            touch-action: none;
+            /* отключаем системные жесты для canvas */
+        }
+
         canvas {
             width: 100%;
             height: auto;
@@ -80,15 +89,15 @@
             display: block;
             cursor: pointer;
             touch-action: none;
+            touch-action: pinch-zoom;
         }
 
         .controls {
             display: flex;
             flex-wrap: wrap;
-            gap: 16px;
+            gap: 12px;
             margin-top: 16px;
             justify-content: center;
-            align-items: center;
         }
 
         .control-group {
@@ -97,72 +106,145 @@
             align-items: center;
             gap: 4px;
             background: #1a2230;
-            padding: 10px 16px;
+            padding: 8px 12px;
             border-radius: 12px;
             border: 1px solid #2a4b62;
             flex: 1;
             min-width: 140px;
+            max-width: 220px;
         }
 
         .control-group label {
-            font-size: 13px;
+            font-size: 12px;
             color: #8899aa;
             font-weight: 500;
+            letter-spacing: 0.3px;
         }
 
         .control-group .value {
-            font-size: 20px;
+            font-size: 18px;
             font-weight: 700;
             color: #8ecae6;
+            min-width: 70px;
+            text-align: center;
         }
 
-        input[type="range"] {
+        .slider-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
             width: 100%;
-            max-width: 200px;
+        }
+
+        .slider-row input[type="range"] {
+            flex: 1;
+            min-width: 60px;
             -webkit-appearance: none;
             appearance: none;
-            height: 6px;
+            height: 5px;
             border-radius: 3px;
             background: linear-gradient(to right, #4a6fa5, #8ecae6);
             outline: none;
         }
 
-        input[type="range"]::-webkit-slider-thumb {
+        .slider-row input[type="range"]::-webkit-slider-thumb {
             -webkit-appearance: none;
             appearance: none;
-            width: 20px;
-            height: 20px;
+            width: 18px;
+            height: 18px;
             border-radius: 50%;
             background: #ffffff;
             cursor: pointer;
-            box-shadow: 0 0 12px rgba(100, 200, 255, 0.4);
+            box-shadow: 0 0 10px rgba(100, 200, 255, 0.3);
         }
 
-        input[type="range"]::-moz-range-thumb {
-            width: 20px;
-            height: 20px;
+        .slider-row input[type="range"]::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
             border-radius: 50%;
             background: #ffffff;
             cursor: pointer;
+        }
+
+        .btn-step {
+            background: #2a3a4a;
+            border: none;
+            color: #b0c0d0;
+            font-size: 20px;
+            font-weight: 700;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.15s;
+            touch-action: manipulation;
+            user-select: none;
+            flex-shrink: 0;
+        }
+
+        .btn-step:active {
+            background: #4a6a8a;
+            color: white;
+            transform: scale(0.92);
+        }
+
+        .btn-step.disabled {
+            opacity: 0.3;
+            pointer-events: none;
+        }
+
+        .zoom-controls {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            margin-top: 8px;
+        }
+
+        .btn-zoom {
+            background: #1a2a3a;
+            border: 1px solid #2a4b62;
+            color: #b0c0d0;
+            font-size: 16px;
+            font-weight: 600;
+            padding: 4px 14px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.15s;
+            touch-action: manipulation;
+            user-select: none;
+        }
+
+        .btn-zoom:active {
+            background: #3a5a7a;
+            color: white;
+        }
+
+        .btn-zoom .label {
+            font-size: 12px;
+            opacity: 0.7;
+            margin-left: 4px;
         }
 
         .legend {
             display: flex;
             flex-wrap: wrap;
-            gap: 16px;
+            gap: 12px;
             margin-top: 12px;
             justify-content: center;
-            font-size: 14px;
+            font-size: 13px;
         }
 
         .legend-item {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
         }
 
         .legend-item .line {
-            width: 30px;
+            width: 26px;
             height: 3px;
             border-radius: 2px;
         }
@@ -183,16 +265,16 @@
 
         .legend-item .line.quantized {
             background: #6a5a7a;
-            opacity: 0.5;
+            opacity: 0.4;
         }
 
         .formula {
             background: #0a0e14;
             border-radius: 10px;
-            padding: 12px 16px;
+            padding: 10px 14px;
             margin-top: 12px;
             font-family: 'Courier New', monospace;
-            font-size: 15px;
+            font-size: 14px;
             text-align: center;
             border: 1px solid #2a4b62;
             color: #aabbcc;
@@ -211,29 +293,29 @@
         .formula .result {
             color: #4a9a6a;
             font-weight: 700;
-            font-size: 18px;
+            font-size: 17px;
         }
 
         .audio-hint {
             margin-top: 12px;
             text-align: center;
             color: #556677;
-            font-size: 14px;
+            font-size: 13px;
         }
 
         .audio-hint .icon {
-            font-size: 20px;
+            font-size: 18px;
         }
 
         .back-link {
             display: inline-flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
             color: #8ecae6;
             text-decoration: none;
             font-weight: 600;
-            margin-bottom: 16px;
-            padding: 8px 16px;
+            margin-bottom: 14px;
+            padding: 6px 14px;
             border: 1px solid #2a4b62;
             border-radius: 30px;
             transition: all 0.2s;
@@ -279,17 +361,30 @@
             }
 
             .control-group {
-                padding: 6px 10px;
-                min-width: 100px;
+                padding: 6px 8px;
+                min-width: 110px;
+                max-width: 170px;
             }
 
             .control-group .value {
                 font-size: 16px;
+                min-width: 60px;
+            }
+
+            .btn-step {
+                width: 28px;
+                height: 28px;
+                font-size: 17px;
             }
 
             .formula {
                 font-size: 12px;
                 padding: 8px 10px;
+            }
+
+            .legend {
+                font-size: 12px;
+                gap: 8px;
             }
         }
     </style>
@@ -304,30 +399,58 @@
             <span class="highlight2">8 кГц</span> → слышно как
             <span class="highlight">3 кГц</span>!
         </div>
-        <canvas id="canvas"></canvas>
+
+        <div class="canvas-wrapper">
+            <canvas id="canvas"></canvas>
+        </div>
+
+        <!-- Управление масштабом (периоды) -->
+        <div class="zoom-controls">
+            <button class="btn-zoom" id="zoomOutBtn" title="Показать больше периодов">➖ <span
+                    class="label">периоды</span></button>
+            <button class="btn-zoom" id="zoomInBtn" title="Показать меньше периодов">➕ <span
+                    class="label">периоды</span></button>
+            <button class="btn-zoom" id="resetZoomBtn" title="Сбросить масштаб">⟲ <span
+                    class="label">сброс</span></button>
+        </div>
+
         <div class="controls">
             <div class="control-group">
                 <label>Частота сигнала</label>
                 <div class="value" id="freqDisplay">5000 Гц</div>
-                <input type="range" id="freqSlider" min="500" max="12000" value="5000" step="100" />
+                <div class="slider-row">
+                    <button class="btn-step" id="freqDec" aria-label="Уменьшить">−</button>
+                    <input type="range" id="freqSlider" min="200" max="12000" value="5000" step="100" />
+                    <button class="btn-step" id="freqInc" aria-label="Увеличить">+</button>
+                </div>
             </div>
             <div class="control-group">
                 <label>Частота дискретизации</label>
                 <div class="value" id="sampleDisplay">8000 Гц</div>
-                <input type="range" id="sampleSlider" min="1000" max="48000" value="8000" step="100" />
+                <div class="slider-row">
+                    <button class="btn-step" id="sampleDec" aria-label="Уменьшить">−</button>
+                    <input type="range" id="sampleSlider" min="1000" max="48000" value="8000" step="100" />
+                    <button class="btn-step" id="sampleInc" aria-label="Увеличить">+</button>
+                </div>
             </div>
             <div class="control-group">
                 <label>Битность</label>
                 <div class="value" id="bitDisplay">8 бит</div>
-                <input type="range" id="bitSlider" min="1" max="16" value="8" step="1" />
+                <div class="slider-row">
+                    <button class="btn-step" id="bitDec" aria-label="Уменьшить">−</button>
+                    <input type="range" id="bitSlider" min="1" max="16" value="8" step="1" />
+                    <button class="btn-step" id="bitInc" aria-label="Увеличить">+</button>
+                </div>
             </div>
         </div>
+
         <div class="formula" id="formula">
             f<sub>ложная</sub> = |f<sub>сигнала</sub> − f<sub>дискретизации</sub> × n| =
             <span class="highlight" id="formulaFreq">5000</span> −
             <span class="highlight2" id="formulaSample">8000</span> × 1 =
             <span class="result" id="formulaResult">3000</span> Гц
         </div>
+
         <div class="legend">
             <div class="legend-item">
                 <div class="line original"></div><span>Исходный сигнал (гладкий)</span>
@@ -368,14 +491,31 @@
             const formulaSample = document.getElementById('formulaSample');
             const formulaResult = document.getElementById('formulaResult');
 
+            // Кнопки +/-
+            const freqDec = document.getElementById('freqDec');
+            const freqInc = document.getElementById('freqInc');
+            const sampleDec = document.getElementById('sampleDec');
+            const sampleInc = document.getElementById('sampleInc');
+            const bitDec = document.getElementById('bitDec');
+            const bitInc = document.getElementById('bitInc');
+
+            // Зум
+            const zoomOutBtn = document.getElementById('zoomOutBtn');
+            const zoomInBtn = document.getElementById('zoomInBtn');
+            const resetZoomBtn = document.getElementById('resetZoomBtn');
+
+            // --- состояние ---
             let audioCtx = null;
             let isPlaying = false;
             let oscillator = null;
             let gainNode = null;
             let playTimeout = null;
-
-            // Флаг, чтобы не дублировать инициализацию аудио
             let audioInitialized = false;
+
+            // Масштаб: количество отображаемых периодов (базовое 3)
+            let displayPeriods = 3;
+            const MIN_PERIODS = 0.8;
+            const MAX_PERIODS = 12;
 
             function getParams() {
                 return {
@@ -422,15 +562,15 @@
 
                 ctx.clearRect(0, 0, w, h);
 
-                // Отступы: увеличиваем нижний, чтобы текст точно помещался
-                const margin = {top: 30, bottom: 70, left: 40, right: 30};
+                const margin = {top: 28, bottom: 62, left: 36, right: 28};
                 const plotW = w - margin.left - margin.right;
                 const plotH = h - margin.top - margin.bottom;
                 const centerY = margin.top + plotH / 2;
                 const amplitude = plotH / 2 * 0.8;
 
-                const periods = 3;
-                const totalPoints = Math.max(10, Math.floor(periods * sampleRate / freq));
+                // Количество периодов для отображения
+                const periods = Math.max(MIN_PERIODS, Math.min(displayPeriods, MAX_PERIODS));
+                const totalPoints = Math.max(20, Math.floor(periods * sampleRate / freq));
                 const stepX = plotW / totalPoints;
 
                 // Исходный сигнал
@@ -448,7 +588,7 @@
                 ctx.stroke();
                 ctx.globalAlpha = 1;
 
-                // Квантование
+                // Квантование (горизонтальные линии)
                 const levels = Math.pow(2, bits);
                 ctx.strokeStyle = '#6a5a7a';
                 ctx.lineWidth = 0.5;
@@ -464,7 +604,7 @@
 
                 // Сэмплы
                 const sampleStep = Math.max(1, Math.floor(sampleRate / freq / 2));
-                const sampleCount = Math.min(Math.floor(totalPoints / sampleStep), 80);
+                const sampleCount = Math.min(Math.floor(totalPoints / sampleStep), 120);
 
                 ctx.fillStyle = '#e63946';
                 ctx.shadowColor = '#e63946';
@@ -482,12 +622,12 @@
                     sampleY.push(y);
 
                     ctx.beginPath();
-                    ctx.arc(x, y, Math.max(4, w / 120), 0, 2 * Math.PI);
+                    ctx.arc(x, y, Math.max(4, w / 130), 0, 2 * Math.PI);
                     ctx.fill();
                 }
                 ctx.shadowBlur = 0;
 
-                // Восстановленный сигнал
+                // Восстановленный сигнал (линейная интерполяция)
                 if (sampleX.length > 1) {
                     ctx.beginPath();
                     ctx.strokeStyle = '#f9c74f';
@@ -500,8 +640,7 @@
                         const y0 = sampleY[i];
                         const x1 = sampleX[i + 1];
                         const y1 = sampleY[i + 1];
-
-                        const steps = 10;
+                        const steps = 8;
                         for (let j = 0; j <= steps; j++) {
                             const t = j / steps;
                             const x = x0 + (x1 - x0) * t;
@@ -514,45 +653,43 @@
                     ctx.setLineDash([]);
                     ctx.globalAlpha = 1;
 
-                    // ---- ТЕКСТЫ ----
-                    // Все тексты рисуем ВНУТРИ области графика, а не за её пределами
+                    // Тексты внутри графика
                     ctx.fillStyle = '#f9c74f';
-                    ctx.font = `${Math.max(14, w / 40)}px monospace`;
+                    ctx.font = `${Math.max(12, w / 42)}px monospace`;
                     ctx.textAlign = 'right';
                     ctx.textBaseline = 'top';
-                    ctx.fillText(`Алиасинг: ${aliasFreq.toFixed(0)} Гц`, margin.left + plotW - 10, margin.top + 10);
+                    ctx.fillText(`Алиасинг: ${aliasFreq.toFixed(0)} Гц`, margin.left + plotW - 8, margin.top + 6);
 
                     ctx.fillStyle = '#4a9a6a';
                     ctx.textAlign = 'left';
                     ctx.textBaseline = 'bottom';
-                    ctx.fillText(`Исходный: ${freq.toFixed(0)} Гц`, margin.left + 10, margin.top + plotH);
+                    ctx.fillText(`Исходный: ${freq.toFixed(0)} Гц`, margin.left + 8, margin.top + plotH);
 
                     ctx.fillStyle = '#e63946';
                     ctx.textAlign = 'left';
                     ctx.textBaseline = 'top';
-                    ctx.fillText(`Дискретизация: ${sampleRate.toFixed(0)} Гц`, margin.left + 10, margin.top + 10);
+                    ctx.fillText(`Дискретизация: ${sampleRate.toFixed(0)} Гц`, margin.left + 8, margin.top + 6);
 
                     ctx.fillStyle = '#8899aa';
                     ctx.textAlign = 'right';
                     ctx.textBaseline = 'bottom';
-                    ctx.fillText(`${(sampleRate / freq).toFixed(2)} сэмплов/период`, margin.left + plotW - 10, margin.top +
-                        plotH);
+                    const sp = (sampleRate / freq);
+                    ctx.fillText(`${sp.toFixed(2)} сэмплов/период`, margin.left + plotW - 8, margin.top + plotH);
 
-                    // Важное предупреждение — рисуем внутри графика, сверху или снизу с отступом
                     if (aliasFreq !== freq && aliasFreq > 0) {
                         ctx.fillStyle = '#f9844a';
                         ctx.textAlign = 'center';
                         ctx.textBaseline = 'top';
-                        ctx.font = `bold ${Math.max(18, w / 30)}px monospace`;
+                        ctx.font = `bold ${Math.max(16, w / 32)}px monospace`;
                         ctx.fillText(`⚠️ ${freq.toFixed(0)} Гц → ${aliasFreq.toFixed(0)} Гц`,
-                            margin.left + plotW / 2, margin.top + plotH + 10);
+                            margin.left + plotW / 2, margin.top + plotH + 6);
                     } else if (sampleRate / freq >= 2) {
                         ctx.fillStyle = '#4a9a6a';
                         ctx.textAlign = 'center';
                         ctx.textBaseline = 'top';
-                        ctx.font = `bold ${Math.max(16, w / 35)}px monospace`;
+                        ctx.font = `bold ${Math.max(14, w / 36)}px monospace`;
                         ctx.fillText(`✅ Нет алиасинга (${(sampleRate / freq).toFixed(1)}×)`,
-                            margin.left + plotW / 2, margin.top + plotH + 10);
+                            margin.left + plotW / 2, margin.top + plotH + 6);
                     }
                 }
             }
@@ -569,31 +706,25 @@
             }
 
             function playSound() {
-                // Инициализируем аудио при первом нажатии
                 if (!audioInitialized) {
                     initAudio();
                 }
-
                 if (!audioCtx) {
                     alert('Аудио не поддерживается в этом браузере');
                     return;
                 }
-
-                // Если контекст приостановлен — возобновляем
                 if (audioCtx.state === 'suspended') {
                     audioCtx.resume();
                 }
 
                 const params = getParams();
                 const aliasFreq = calculateAlias(params.freq, params.sampleRate);
-                // Частота для воспроизведения: если алиасинг даёт слишком низкую или нулевую частоту — используем 440 Гц
                 let playFreq = aliasFreq;
                 if (playFreq < 20 || playFreq > 20000) {
                     playFreq = 440;
                 }
 
                 if (isPlaying) {
-                    // Останавливаем текущий звук
                     try {
                         if (oscillator) {
                             oscillator.stop(0);
@@ -608,7 +739,7 @@
                             clearTimeout(playTimeout);
                             playTimeout = null;
                         }
-                    } catch (e) { /* игнорируем */}
+                    } catch (e) { /* игнор */}
                     isPlaying = false;
                     canvas.style.borderColor = '#2a4b62';
                     canvas.style.borderWidth = '1px';
@@ -641,7 +772,7 @@
                                 oscillator.stop(0);
                                 oscillator.disconnect();
                                 gainNode.disconnect();
-                            } catch (e) { /* игнорируем */}
+                            } catch (e) { /* игнор */}
                             isPlaying = false;
                             canvas.style.borderColor = '#2a4b62';
                             canvas.style.borderWidth = '1px';
@@ -655,45 +786,66 @@
                 }
             }
 
-            // ---- ОБНОВЛЕНИЕ ПРИ ИЗМЕНЕНИИ СЛАЙДЕРОВ ----
+            // ---- ОБНОВЛЕНИЕ ----
             function updateAndDraw() {
                 draw();
                 if (isPlaying) {
                     const params = getParams();
                     const aliasFreq = calculateAlias(params.freq, params.sampleRate);
                     let playFreq = aliasFreq;
-                    if (playFreq < 20 || playFreq > 20000) {
-                        playFreq = 440;
-                    }
+                    if (playFreq < 20 || playFreq > 20000) playFreq = 440;
                     if (oscillator) {
                         try {
                             oscillator.frequency.setTargetAtTime(playFreq, audioCtx.currentTime, 0.01);
-                        } catch (e) { /* игнорируем */}
+                        } catch (e) { /* игнор */}
                     }
                 }
+            }
+
+            // ---- СЛАЙДЕРЫ + КНОПКИ ----
+            function stepSlider(slider, delta, min, max, step) {
+                let val = parseFloat(slider.value) + delta;
+                val = Math.max(min, Math.min(max, val));
+                val = Math.round(val / step) * step;
+                slider.value = val;
+                updateAndDraw();
             }
 
             freqSlider.addEventListener('input', updateAndDraw);
             sampleSlider.addEventListener('input', updateAndDraw);
             bitSlider.addEventListener('input', updateAndDraw);
 
-            // ---- СОБЫТИЯ ДЛЯ ЗВУКА (работают на ПК и смартфонах) ----
-            // Используем pointerdown вместо click/touchstart для лучшей совместимости
-            canvas.addEventListener('pointerdown', function (e) {
-                e.preventDefault();
-                // Инициализируем аудио при первом касании
-                if (!audioInitialized) {
-                    initAudio();
-                }
-                playSound();
+            freqDec.addEventListener('click', () => stepSlider(freqSlider, -100, 200, 12000, 100));
+            freqInc.addEventListener('click', () => stepSlider(freqSlider, 100, 200, 12000, 100));
+            sampleDec.addEventListener('click', () => stepSlider(sampleSlider, -100, 1000, 48000, 100));
+            sampleInc.addEventListener('click', () => stepSlider(sampleSlider, 100, 1000, 48000, 100));
+            bitDec.addEventListener('click', () => stepSlider(bitSlider, -1, 1, 16, 1));
+            bitInc.addEventListener('click', () => stepSlider(bitSlider, 1, 1, 16, 1));
+
+            // ---- ЗУМ ----
+            function changeZoom(delta) {
+                displayPeriods = Math.max(MIN_PERIODS, Math.min(MAX_PERIODS, displayPeriods + delta));
+                // округлим для красоты
+                displayPeriods = Math.round(displayPeriods * 10) / 10;
+                draw();
+            }
+
+            zoomOutBtn.addEventListener('click', () => changeZoom(-0.5));
+            zoomInBtn.addEventListener('click', () => changeZoom(0.5));
+            resetZoomBtn.addEventListener('click', () => {
+                displayPeriods = 3;
+                draw();
             });
 
-            // Резерв: если pointerdown не сработал (старые браузеры)
+            // ---- СОБЫТИЯ ДЛЯ ЗВУКА ----
+            canvas.addEventListener('pointerdown', function (e) {
+                e.preventDefault();
+                if (!audioInitialized) initAudio();
+                playSound();
+            });
             canvas.addEventListener('click', function (e) {
                 e.preventDefault();
-                if (!audioInitialized) {
-                    initAudio();
-                }
+                if (!audioInitialized) initAudio();
                 playSound();
             });
 
@@ -704,28 +856,52 @@
                 resizeTimeout = setTimeout(draw, 100);
             });
 
-            // Первоначальный рендеринг
+            // ---- ИНИЦИАЛИЗАЦИЯ ----
             setTimeout(draw, 50);
             window.addEventListener('load', function () {
                 setTimeout(draw, 100);
             });
 
-            // Инициализируем аудио при первом клике по странице (политика автозапуска)
             document.addEventListener('pointerdown', function initAudioOnce() {
-                if (!audioInitialized) {
-                    initAudio();
-                }
-                // Удаляем после первого касания, чтобы не мешать
+                if (!audioInitialized) initAudio();
                 document.removeEventListener('pointerdown', initAudioOnce);
             }, {once: true});
-
-            // Для очень старых браузеров — запасной вариант
             document.addEventListener('click', function initAudioOnceClick() {
-                if (!audioInitialized) {
-                    initAudio();
-                }
+                if (!audioInitialized) initAudio();
                 document.removeEventListener('click', initAudioOnceClick);
             }, {once: true});
+
+            // ---- ДОПОЛНИТЕЛЬНО: жесты на canvas (pinch) ----
+            let lastTouchDist = 0;
+            canvas.addEventListener('touchstart', function (e) {
+                if (e.touches.length === 2) {
+                    const dx = e.touches[0].clientX - e.touches[1].clientX;
+                    const dy = e.touches[0].clientY - e.touches[1].clientY;
+                    lastTouchDist = Math.sqrt(dx * dx + dy * dy);
+                }
+            }, {passive: true});
+
+            canvas.addEventListener('touchmove', function (e) {
+                if (e.touches.length === 2) {
+                    e.preventDefault();
+                    const dx = e.touches[0].clientX - e.touches[1].clientX;
+                    const dy = e.touches[0].clientY - e.touches[1].clientY;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    if (lastTouchDist > 0) {
+                        const delta = (dist - lastTouchDist) / 100;
+                        if (Math.abs(delta) > 0.02) {
+                            changeZoom(delta * 2);
+                            lastTouchDist = dist;
+                        }
+                    } else {
+                        lastTouchDist = dist;
+                    }
+                }
+            }, {passive: false});
+
+            canvas.addEventListener('touchend', function (e) {
+                lastTouchDist = 0;
+            }, {passive: true});
 
         })();
     </script>
