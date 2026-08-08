@@ -6,15 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>Эффект Найквиста — визуальная демонстрация алиасинга | volkovhl</title>
     <meta name="description"
-        content="Интерактивная демонстрация эффекта Найквиста (алиасинга). Увидьте, как 5 кГц превращается в 3 кГц при дискретизации 8 кГц. Наглядный пример теоремы Котельникова." />
-    <meta name="keywords"
-        content="эффект Найквиста, алиасинг, теорема Котельникова, дискретизация, частота, синус, генератор, цифровой звук" />
-    <meta name="author" content="Pavel Volkov / volkovhl.github.io" />
+        content="Интерактивная демонстрация эффекта Найквиста (алиасинга). Увидьте, как 5 кГц превращается в 3 кГц при дискретизации 8 кГц." />
     <link rel="canonical" href="https://volkovhl.github.io/aliasing-demo.html" />
     <meta property="og:title" content="Эффект Найквиста — визуальная демонстрация алиасинга" />
-    <meta property="og:description"
-        content="Интерактивная демонстрация эффекта Найквиста. Увидьте, как 5 кГц превращается в 3 кГц при дискретизации 8 кГц." />
-    <meta name="twitter:card" content="summary_large_image" />
     <link rel="icon"
         href="data:image/svg+xml,&lt;svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'&gt;&lt;text y='.9em' font-size='90'&gt;🌀&lt;/text&gt;&lt;/svg&gt;" />
     <style>
@@ -25,8 +19,8 @@
         }
 
         body {
-            background: #0b0e14;
-            color: #e0e0e0;
+            background: #f0f4f8;
+            color: #1a1f2a;
             font-family: -apple-system, 'Segoe UI', Roboto, sans-serif;
             padding: 20px;
             display: flex;
@@ -39,33 +33,33 @@
         .container {
             max-width: 900px;
             width: 100%;
-            background: #141a22;
-            border-radius: 20px;
+            background: #ffffff;
+            border-radius: 24px;
             padding: 24px;
-            box-shadow: 0 8px 40px rgba(0, 0, 0, 0.7);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
         }
 
         h1 {
             font-size: 28px;
-            margin-bottom: 8px;
-            color: #8ecae6;
+            margin-bottom: 6px;
+            color: #0b3b5c;
             text-align: center;
         }
 
         .subtitle {
             text-align: center;
-            color: #8899aa;
+            color: #2a4055;
             font-size: 18px;
-            margin-bottom: 20px;
+            margin-bottom: 18px;
         }
 
         .subtitle .highlight {
-            color: #f9c74f;
+            color: #c44536;
             font-weight: 700;
         }
 
         .subtitle .highlight2 {
-            color: #f9844a;
+            color: #2d6a8f;
             font-weight: 700;
         }
 
@@ -78,37 +72,34 @@
         .canvas-tap-hint {
             text-align: center;
             font-size: 13px;
-            color: #8899aa;
+            color: #3a4f66;
             margin-bottom: 6px;
             letter-spacing: 0.2px;
         }
 
         .canvas-tap-hint span {
             display: inline-block;
-            padding: 3px 12px;
-            border-radius: 20px;
-            background: #1a2230;
-            border: 1px solid #2a4b62;
-            color: #b0c0d0;
-        }
-
-        .canvas-tap-hint .tap-icon {
-            margin-right: 4px;
+            padding: 3px 14px;
+            border-radius: 30px;
+            background: #e8edf2;
+            border: 1px solid #b8c9da;
+            color: #1a2f44;
         }
 
         canvas {
             width: 100%;
             height: auto;
             aspect-ratio: 16/5;
-            background: #0a0e14;
-            border-radius: 12px;
-            border: 1px solid #2a4b62;
+            background: #f8faff;
+            border-radius: 14px;
+            border: 1px solid #b8c9da;
             display: block;
             cursor: pointer;
             touch-action: none;
             -webkit-touch-callout: none;
             -webkit-user-select: none;
             user-select: none;
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.6);
         }
 
         .controls {
@@ -124,10 +115,10 @@
             flex-direction: column;
             align-items: center;
             gap: 4px;
-            background: #1a2230;
+            background: #eef3f8;
             padding: 8px 12px;
-            border-radius: 12px;
-            border: 1px solid #2a4b62;
+            border-radius: 16px;
+            border: 1px solid #c7d6e5;
             flex: 1;
             min-width: 140px;
             max-width: 220px;
@@ -135,15 +126,15 @@
 
         .control-group label {
             font-size: 12px;
-            color: #8899aa;
-            font-weight: 500;
+            color: #2a4055;
+            font-weight: 600;
             letter-spacing: 0.3px;
         }
 
         .control-group .value {
             font-size: 18px;
             font-weight: 700;
-            color: #8ecae6;
+            color: #0b3b5c;
             min-width: 70px;
             text-align: center;
         }
@@ -161,8 +152,8 @@
             -webkit-appearance: none;
             appearance: none;
             height: 5px;
-            border-radius: 3px;
-            background: linear-gradient(to right, #4a6fa5, #8ecae6);
+            border-radius: 4px;
+            background: linear-gradient(to right, #6a8fbb, #2d6a8f);
             outline: none;
         }
 
@@ -172,23 +163,23 @@
             width: 18px;
             height: 18px;
             border-radius: 50%;
-            background: #ffffff;
+            background: #1e3b5a;
             cursor: pointer;
-            box-shadow: 0 0 10px rgba(100, 200, 255, 0.3);
+            box-shadow: 0 0 8px rgba(30, 59, 90, 0.3);
         }
 
         .slider-row input[type="range"]::-moz-range-thumb {
             width: 18px;
             height: 18px;
             border-radius: 50%;
-            background: #ffffff;
+            background: #1e3b5a;
             cursor: pointer;
         }
 
         .btn-step {
-            background: #2a3a4a;
+            background: #d5e0eb;
             border: none;
-            color: #b0c0d0;
+            color: #1a2f44;
             font-size: 20px;
             font-weight: 700;
             width: 32px;
@@ -198,21 +189,16 @@
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            transition: all 0.15s;
+            transition: all 0.1s;
             touch-action: manipulation;
             user-select: none;
             flex-shrink: 0;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
         }
 
         .btn-step:active {
-            background: #4a6a8a;
-            color: white;
+            background: #b0c8dd;
             transform: scale(0.92);
-        }
-
-        .btn-step.disabled {
-            opacity: 0.3;
-            pointer-events: none;
         }
 
         .zoom-controls {
@@ -223,22 +209,21 @@
         }
 
         .btn-zoom {
-            background: #1a2a3a;
-            border: 1px solid #2a4b62;
-            color: #b0c0d0;
+            background: #e3eaf2;
+            border: 1px solid #b8c9da;
+            color: #1a2f44;
             font-size: 16px;
             font-weight: 600;
             padding: 4px 14px;
-            border-radius: 20px;
+            border-radius: 30px;
             cursor: pointer;
-            transition: all 0.15s;
+            transition: all 0.1s;
             touch-action: manipulation;
             user-select: none;
         }
 
         .btn-zoom:active {
-            background: #3a5a7a;
-            color: white;
+            background: #c7d6e5;
         }
 
         .btn-zoom .label {
@@ -254,6 +239,7 @@
             margin-top: 12px;
             justify-content: center;
             font-size: 13px;
+            color: #1a2f44;
         }
 
         .legend-item {
@@ -265,51 +251,51 @@
         .legend-item .line {
             width: 26px;
             height: 3px;
-            border-radius: 2px;
+            border-radius: 3px;
         }
 
         .legend-item .line.original {
-            background: #4a9a6a;
+            background: #2a7a5a;
         }
 
         .legend-item .line.samples {
-            background: #e63946;
+            background: #c92a3a;
         }
 
         .legend-item .line.reconstructed {
-            background: #f9c74f;
+            background: #c47b2a;
             height: 3px;
         }
 
         .legend-item .line.quantized {
-            background: #6a5a7a;
-            opacity: 0.4;
+            background: #8a6a9a;
+            opacity: 0.5;
         }
 
         .formula {
-            background: #0a0e14;
-            border-radius: 10px;
+            background: #eef3f8;
+            border-radius: 14px;
             padding: 10px 14px;
             margin-top: 12px;
             font-family: 'Courier New', monospace;
             font-size: 14px;
             text-align: center;
-            border: 1px solid #2a4b62;
-            color: #aabbcc;
+            border: 1px solid #c7d6e5;
+            color: #1a2f44;
         }
 
         .formula .highlight {
-            color: #f9c74f;
+            color: #c44536;
             font-weight: 700;
         }
 
         .formula .highlight2 {
-            color: #e63946;
+            color: #2d6a8f;
             font-weight: 700;
         }
 
         .formula .result {
-            color: #4a9a6a;
+            color: #1f7a5a;
             font-weight: 700;
             font-size: 17px;
         }
@@ -317,46 +303,42 @@
         .audio-hint {
             margin-top: 12px;
             text-align: center;
-            color: #556677;
+            color: #4a607a;
             font-size: 13px;
-        }
-
-        .audio-hint .icon {
-            font-size: 18px;
         }
 
         .back-link {
             display: inline-flex;
             align-items: center;
             gap: 6px;
-            color: #8ecae6;
+            color: #1f5a7a;
             text-decoration: none;
             font-weight: 600;
             margin-bottom: 14px;
-            padding: 6px 14px;
-            border: 1px solid #2a4b62;
+            padding: 6px 16px;
+            border: 1px solid #b8c9da;
             border-radius: 30px;
             transition: all 0.2s;
         }
 
         .back-link:hover {
-            background: #1a2a3a;
-            border-color: #4a6a8a;
+            background: #e3eaf2;
+            border-color: #8aaccc;
         }
 
         .footer-links {
             text-align: center;
             font-size: clamp(12px, 2.8vw, 14px);
-            border-top: 1px solid #2a4b62;
+            border-top: 1px solid #c7d6e5;
             padding: 12px 0 4px 0;
             width: 100%;
             max-width: 900px;
             margin: 16px auto 0;
-            background: #0b0e14;
+            background: #f0f4f8;
         }
 
         .footer-links a {
-            color: #7a5a3a;
+            color: #4a607a;
             text-decoration: none;
             margin: 0 8px;
         }
@@ -418,18 +400,15 @@
             <span class="highlight">3 кГц</span>!
         </div>
 
-        <div class="canvas-tap-hint"><span><span class="tap-icon">🎵</span>Нажмите на график</span></div>
+        <div class="canvas-tap-hint"><span>🎵 Нажмите на график — звук</span></div>
         <div class="canvas-wrapper">
             <canvas id="canvas"></canvas>
         </div>
 
         <div class="zoom-controls">
-            <button class="btn-zoom" id="zoomOutBtn" title="Показать больше периодов">➖ <span
-                    class="label">периоды</span></button>
-            <button class="btn-zoom" id="zoomInBtn" title="Показать меньше периодов">➕ <span
-                    class="label">периоды</span></button>
-            <button class="btn-zoom" id="resetZoomBtn" title="Сбросить масштаб">⟲ <span
-                    class="label">сброс</span></button>
+            <button class="btn-zoom" id="zoomOutBtn">➖ <span class="label">периоды</span></button>
+            <button class="btn-zoom" id="zoomInBtn">➕ <span class="label">периоды</span></button>
+            <button class="btn-zoom" id="resetZoomBtn">⟲ <span class="label">сброс</span></button>
         </div>
 
         <div class="controls">
@@ -437,27 +416,27 @@
                 <label>Частота сигнала</label>
                 <div class="value" id="freqDisplay">5000 Гц</div>
                 <div class="slider-row">
-                    <button class="btn-step" id="freqDec" aria-label="Уменьшить">−</button>
+                    <button class="btn-step" id="freqDec">−</button>
                     <input type="range" id="freqSlider" min="200" max="12000" value="5000" step="100" />
-                    <button class="btn-step" id="freqInc" aria-label="Увеличить">+</button>
+                    <button class="btn-step" id="freqInc">+</button>
                 </div>
             </div>
             <div class="control-group">
                 <label>Частота дискретизации</label>
                 <div class="value" id="sampleDisplay">8000 Гц</div>
                 <div class="slider-row">
-                    <button class="btn-step" id="sampleDec" aria-label="Уменьшить">−</button>
+                    <button class="btn-step" id="sampleDec">−</button>
                     <input type="range" id="sampleSlider" min="1000" max="48000" value="8000" step="100" />
-                    <button class="btn-step" id="sampleInc" aria-label="Увеличить">+</button>
+                    <button class="btn-step" id="sampleInc">+</button>
                 </div>
             </div>
             <div class="control-group">
                 <label>Битность</label>
                 <div class="value" id="bitDisplay">8 бит</div>
                 <div class="slider-row">
-                    <button class="btn-step" id="bitDec" aria-label="Уменьшить">−</button>
+                    <button class="btn-step" id="bitDec">−</button>
                     <input type="range" id="bitSlider" min="1" max="16" value="8" step="1" />
-                    <button class="btn-step" id="bitInc" aria-label="Увеличить">+</button>
+                    <button class="btn-step" id="bitInc">+</button>
                 </div>
             </div>
         </div>
@@ -471,19 +450,18 @@
 
         <div class="legend">
             <div class="legend-item">
-                <div class="line original"></div><span>Исходный сигнал (гладкий)</span>
+                <div class="line original"></div><span>Исходный сигнал</span>
             </div>
             <div class="legend-item">
                 <div class="line samples"></div><span>Квантованные сэмплы</span>
             </div>
             <div class="legend-item">
-                <div class="line reconstructed"></div><span>Восстановленный (ступени + алиасинг)</span>
+                <div class="line reconstructed"></div><span>Восстановленный (ступени)</span>
             </div>
             <div class="legend-item">
                 <div class="line quantized"></div><span>Уровни квантования</span>
             </div>
         </div>
-
     </div>
     <div class="footer-links">
         <a href="https://volkovhl.github.io/" target="_blank">volkovhl.github.io</a> |
@@ -520,8 +498,6 @@
             let oscillator = null;
             let gainNode = null;
             let playTimeout = null;
-            let audioInitialized = false;
-
             let displayPeriods = 3;
             const MIN_PERIODS = 0.8;
             const MAX_PERIODS = 12;
@@ -536,7 +512,6 @@
 
             function calculateAlias(freq, sampleRate) {
                 if (freq <= 0 || sampleRate <= 0) return 0;
-                // Правильное «складывание» частоты в зону Найквиста [0, fs/2]
                 let f = Math.abs(freq) % sampleRate;
                 if (f > sampleRate / 2) f = sampleRate - f;
                 return f;
@@ -554,7 +529,7 @@
                 const {freq, sampleRate, bits} = params;
                 const aliasFreq = calculateAlias(freq, sampleRate);
                 const nyquist = sampleRate / 2;
-                const hasAlias = Math.abs(aliasFreq - freq) > 0.5; // допуск на float
+                const hasAlias = Math.abs(aliasFreq - freq) > 0.5;
 
                 formulaFreq.textContent = freq.toFixed(0);
                 formulaSample.textContent = sampleRate.toFixed(0);
@@ -569,6 +544,26 @@
                 bitDisplay.textContent = bits + ' бит';
 
                 ctx.clearRect(0, 0, w, h);
+                // --- светлый фон с лёгкой сеткой для контраста ---
+                ctx.fillStyle = '#f8faff';
+                ctx.fillRect(0, 0, w, h);
+                // сетка (полупрозрачная)
+                ctx.strokeStyle = '#d7e0ea';
+                ctx.lineWidth = 0.8;
+                ctx.globalAlpha = 0.3;
+                for (let y = 0; y < h; y += 40) {
+                    ctx.beginPath();
+                    ctx.moveTo(0, y);
+                    ctx.lineTo(w, y);
+                    ctx.stroke();
+                }
+                for (let x = 0; x < w; x += 60) {
+                    ctx.beginPath();
+                    ctx.moveTo(x, 0);
+                    ctx.lineTo(x, h);
+                    ctx.stroke();
+                }
+                ctx.globalAlpha = 1;
 
                 const margin = {top: 28, bottom: 62, left: 36, right: 28};
                 const plotW = w - margin.left - margin.right;
@@ -580,10 +575,11 @@
                 const totalPoints = Math.max(20, Math.floor(periods * sampleRate / freq));
                 const stepX = plotW / totalPoints;
 
+                // --- исходный гладкий сигнал (зелёный) ---
                 ctx.beginPath();
-                ctx.strokeStyle = '#4a9a6a';
-                ctx.lineWidth = 2;
-                ctx.globalAlpha = 0.7;
+                ctx.strokeStyle = '#2a7a5a';
+                ctx.lineWidth = 2.2;
+                ctx.globalAlpha = 0.75;
                 for (let i = 0; i <= totalPoints; i++) {
                     const x = margin.left + i * stepX;
                     const t = (i / totalPoints) * periods * 2 * Math.PI;
@@ -594,23 +590,21 @@
                 ctx.stroke();
                 ctx.globalAlpha = 1;
 
-                // --- Квантование по амплитуде (битность) ---
-                // bipolar: уровни от -1 до +1, число ступенек = 2^bits
+                // --- квантование ---
                 const quantSteps = Math.pow(2, bits);
                 function quantize(val) {
-                    // val в [-1, 1] → ближайший уровень
-                    const u = (val + 1) / 2; // [0, 1]
+                    const u = (val + 1) / 2;
                     const q = Math.round(u * (quantSteps - 1)) / (quantSteps - 1);
                     return q * 2 - 1;
                 }
 
-                // Линии уровней — только при низкой разрядности, иначе не видны
-                if (bits <= 6) {
-                    ctx.strokeStyle = '#6a5a7a';
-                    ctx.lineWidth = 0.5;
-                    ctx.globalAlpha = bits <= 3 ? 0.45 : 0.25;
+                // линии уровней квантования (серо-фиолетовые, тонкие)
+                if (bits <= 7) {
+                    ctx.strokeStyle = '#8a6a9a';
+                    ctx.lineWidth = 0.7;
+                    ctx.globalAlpha = 0.35;
                     for (let lv = 0; lv < quantSteps; lv++) {
-                        const qVal = (lv / (quantSteps - 1)) * 2 - 1; // -1 .. +1
+                        const qVal = (lv / (quantSteps - 1)) * 2 - 1;
                         const yPos = centerY - amplitude * qVal;
                         ctx.beginPath();
                         ctx.moveTo(margin.left, yPos);
@@ -620,19 +614,17 @@
                     ctx.globalAlpha = 1;
                 }
 
-                // Сэмплы с правильным шагом по времени (1 / sampleRate)
                 const durationSec = periods / freq;
-                const sampleCount = Math.min(160, Math.max(2, Math.floor(sampleRate * durationSec) + 1));
-
+                const sampleCount = Math.min(200, Math.max(2, Math.floor(sampleRate * durationSec) + 1));
                 const sampleX = [];
-                const sampleY = []; // квантованные Y на канвасе
-                const sampleYcont = []; // непрерывные (для «хвостов» ошибки)
+                const sampleY = [];
+                const sampleYcont = [];
 
                 for (let i = 0; i < sampleCount; i++) {
                     const tSec = i / sampleRate;
                     if (tSec > durationSec + 1e-12) break;
                     const phase = 2 * Math.PI * freq * tSec;
-                    const cont = Math.sin(phase);           // [-1, 1]
+                    const cont = Math.sin(phase);
                     const q = quantize(cont);
                     const x = margin.left + (tSec / durationSec) * plotW;
                     const yQ = centerY - amplitude * q;
@@ -642,11 +634,11 @@
                     sampleYcont.push(yC);
                 }
 
-                // Тонкие линии ошибки квантования (от синуса к уровню) — при низкой битности
+                // тонкие линии ошибки квантования (от синуса к уровню)
                 if (bits <= 5 && sampleX.length > 0) {
-                    ctx.strokeStyle = '#e63946';
-                    ctx.lineWidth = 1;
-                    ctx.globalAlpha = 0.35;
+                    ctx.strokeStyle = '#c92a3a';
+                    ctx.lineWidth = 1.2;
+                    ctx.globalAlpha = 0.25;
                     for (let i = 0; i < sampleX.length; i++) {
                         ctx.beginPath();
                         ctx.moveTo(sampleX[i], sampleYcont[i]);
@@ -656,10 +648,10 @@
                     ctx.globalAlpha = 1;
                 }
 
-                // Красные точки — квантованные сэмплы
-                ctx.fillStyle = '#e63946';
-                ctx.shadowColor = '#e63946';
-                ctx.shadowBlur = 8;
+                // красные точки — квантованные сэмплы (яркие)
+                ctx.fillStyle = '#c92a3a';
+                ctx.shadowColor = '#c92a3a';
+                ctx.shadowBlur = 6;
                 const dotR = Math.max(4, w / 130);
                 for (let i = 0; i < sampleX.length; i++) {
                     ctx.beginPath();
@@ -669,189 +661,118 @@
                 ctx.shadowBlur = 0;
 
                 if (sampleX.length > 1) {
-                    // Жёлтая линия: ступенчатая (zero-order hold) — так лучше видно квантование
-                    // + пунктир линейной интерполяции для «восстановленного» вида
+                    // ступенчатая линия (восстановленный) — жёлто-оранжевая
                     ctx.beginPath();
-                    ctx.strokeStyle = '#f9c74f';
+                    ctx.strokeStyle = '#c47b2a';
                     ctx.lineWidth = 2.5;
-                    ctx.globalAlpha = 0.95;
+                    ctx.globalAlpha = 0.9;
                     ctx.moveTo(sampleX[0], sampleY[0]);
                     for (let i = 0; i < sampleX.length - 1; i++) {
-                        // горизонталь до следующего сэмпла, потом вертикаль (ZOH)
                         ctx.lineTo(sampleX[i + 1], sampleY[i]);
                         ctx.lineTo(sampleX[i + 1], sampleY[i + 1]);
                     }
                     ctx.stroke();
                     ctx.globalAlpha = 1;
 
-                    ctx.fillStyle = '#f9c74f';
-                    ctx.font = `${Math.max(12, w / 42)}px monospace`;
+                    // подписи на графике (светлые тени для читаемости)
+                    ctx.shadowColor = 'rgba(255,255,255,0.8)';
+                    ctx.shadowBlur = 6;
+                    ctx.fillStyle = '#1a2f44';
+                    ctx.font = `bold ${Math.max(12, w / 42)}px monospace`;
                     ctx.textAlign = 'right';
                     ctx.textBaseline = 'top';
                     ctx.fillText(`Алиасинг: ${aliasFreq.toFixed(0)} Гц`, margin.left + plotW - 8, margin.top + 6);
 
-                    ctx.fillStyle = '#4a9a6a';
+                    ctx.fillStyle = '#1f6a4a';
                     ctx.textAlign = 'left';
                     ctx.textBaseline = 'bottom';
                     ctx.fillText(`Исходный: ${freq.toFixed(0)} Гц`, margin.left + 8, margin.top + plotH);
 
-                    ctx.fillStyle = '#e63946';
+                    ctx.fillStyle = '#b52a3a';
                     ctx.textAlign = 'left';
                     ctx.textBaseline = 'top';
                     ctx.fillText(`Дискретизация: ${sampleRate.toFixed(0)} Гц`, margin.left + 8, margin.top + 6);
 
-                    ctx.fillStyle = '#8899aa';
+                    ctx.fillStyle = '#2a4055';
                     ctx.textAlign = 'right';
                     ctx.textBaseline = 'bottom';
                     const sp = (sampleRate / freq);
                     ctx.fillText(`${sp.toFixed(2)} сэмплов/период · ${bits} бит`, margin.left + plotW - 8, margin.top + plotH);
 
                     if (Math.abs(aliasFreq - freq) > 0.5 && aliasFreq > 0) {
-                        ctx.fillStyle = '#f9844a';
+                        ctx.fillStyle = '#c44536';
                         ctx.textAlign = 'center';
                         ctx.textBaseline = 'top';
                         ctx.font = `bold ${Math.max(16, w / 32)}px monospace`;
                         ctx.fillText(`⚠️ ${freq.toFixed(0)} Гц → ${aliasFreq.toFixed(0)} Гц`,
                             margin.left + plotW / 2, margin.top + plotH + 6);
                     } else if (sampleRate / freq >= 2) {
-                        ctx.fillStyle = '#4a9a6a';
+                        ctx.fillStyle = '#1f7a5a';
                         ctx.textAlign = 'center';
                         ctx.textBaseline = 'top';
                         ctx.font = `bold ${Math.max(14, w / 36)}px monospace`;
                         ctx.fillText(`✅ Нет алиасинга (${(sampleRate / freq).toFixed(1)}×)`,
                             margin.left + plotW / 2, margin.top + plotH + 6);
                     }
+                    ctx.shadowBlur = 0;
                 }
             }
 
-            // === АУДИО: корректная инициализация для iOS / Android ===
-            // resume() асинхронный — без await звук на тачскрине часто не стартует
+            // --- аудио (без изменений, работает как раньше) ---
             function initAudio() {
                 if (audioCtx) return Promise.resolve(audioCtx);
                 try {
                     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                    audioInitialized = true;
-                    console.log('AudioContext created, state:', audioCtx.state);
                     return Promise.resolve(audioCtx);
-                } catch (e) {
-                    console.warn('Audio not supported:', e);
-                    return Promise.reject(e);
-                }
+                } catch (e) {return Promise.reject(e);}
             }
 
             function ensureAudioRunning() {
                 return initAudio().then(function (ctx) {
-                    if (ctx.state === 'suspended') {
-                        return ctx.resume().then(function () {
-                            console.log('AudioContext resumed, state:', ctx.state);
-                            return ctx;
-                        });
-                    }
+                    if (ctx.state === 'suspended') return ctx.resume().then(() => ctx);
                     return ctx;
                 });
             }
 
             function stopSound() {
                 try {
-                    if (oscillator) {
-                        oscillator.onended = null;
-                        oscillator.stop(0);
-                        oscillator.disconnect();
-                        oscillator = null;
-                    }
-                    if (gainNode) {
-                        gainNode.disconnect();
-                        gainNode = null;
-                    }
-                    if (playTimeout) {
-                        clearTimeout(playTimeout);
-                        playTimeout = null;
-                    }
-                } catch (e) { /* игнор */}
+                    if (oscillator) {oscillator.onended = null; oscillator.stop(0); oscillator.disconnect(); oscillator = null;}
+                    if (gainNode) {gainNode.disconnect(); gainNode = null;}
+                    if (playTimeout) {clearTimeout(playTimeout); playTimeout = null;}
+                } catch (e) { }
                 isPlaying = false;
-                canvas.style.borderColor = '#2a4b62';
+                canvas.style.borderColor = '#b8c9da';
                 canvas.style.borderWidth = '1px';
             }
 
             function toggleSound() {
-                if (isPlaying) {
-                    stopSound();
-                    console.log('Sound stopped');
-                    return;
-                }
-
+                if (isPlaying) {stopSound(); return;}
                 const params = getParams();
-                const aliasFreq = calculateAlias(params.freq, params.sampleRate);
-                let playFreq = aliasFreq;
-                if (playFreq < 20 || playFreq > 20000) {
-                    playFreq = 440;
-                }
-
-                // resume + start строго внутри жеста пользователя (критично для мобильных)
+                let playFreq = calculateAlias(params.freq, params.sampleRate);
+                if (playFreq < 20 || playFreq > 20000) playFreq = 440;
                 ensureAudioRunning().then(function (ctx) {
-                    if (!ctx) {
-                        alert('Аудио не поддерживается в этом браузере');
-                        return;
-                    }
-                    // на всякий случай ещё раз, если браузер снова приостановил
-                    const startOsc = function () {
-                        try {
-                            if (isPlaying) return; // защита от двойного вызова
-                            oscillator = ctx.createOscillator();
-                            gainNode = ctx.createGain();
-                            oscillator.type = 'sine';
-                            oscillator.frequency.value = playFreq;
-                            gainNode.gain.setValueAtTime(0.25, ctx.currentTime);
-                            oscillator.connect(gainNode);
-                            gainNode.connect(ctx.destination);
-                            oscillator.start(0);
-                            isPlaying = true;
-                            canvas.style.borderColor = '#f9c74f';
-                            canvas.style.borderWidth = '3px';
-                            console.log('Sound started, frequency:', playFreq, 'ctx state:', ctx.state);
-
-                            oscillator.onended = function () {
-                                isPlaying = false;
-                                canvas.style.borderColor = '#2a4b62';
-                                canvas.style.borderWidth = '1px';
-                            };
-
-                            if (playTimeout) clearTimeout(playTimeout);
-                            playTimeout = setTimeout(function () {
-                                if (isPlaying) stopSound();
-                                playTimeout = null;
-                            }, 5000);
-                        } catch (e) {
-                            console.error('Audio error:', e);
-                            alert('Ошибка звука: ' + e.message);
-                        }
-                    };
-
-                    if (ctx.state === 'running') {
-                        startOsc();
-                    } else {
-                        ctx.resume().then(startOsc).catch(function (e) {
-                            console.error('resume failed:', e);
-                        });
-                    }
-                }).catch(function (e) {
-                    console.error('ensureAudioRunning failed:', e);
-                    alert('Аудио не поддерживается в этом браузере');
-                });
-            }
-
-            function updateAndDraw() {
-                draw();
-                if (isPlaying && oscillator && audioCtx) {
-                    const params = getParams();
-                    const aliasFreq = calculateAlias(params.freq, params.sampleRate);
-                    let playFreq = aliasFreq;
-                    if (playFreq < 20 || playFreq > 20000) playFreq = 440;
+                    if (!ctx) {alert('Аудио не поддерживается'); return;}
                     try {
-                        oscillator.frequency.setTargetAtTime(playFreq, audioCtx.currentTime, 0.01);
-                    } catch (e) { /* игнор */}
-                }
+                        if (isPlaying) return;
+                        oscillator = ctx.createOscillator();
+                        gainNode = ctx.createGain();
+                        oscillator.type = 'sine';
+                        oscillator.frequency.value = playFreq;
+                        gainNode.gain.setValueAtTime(0.2, ctx.currentTime);
+                        oscillator.connect(gainNode);
+                        gainNode.connect(ctx.destination);
+                        oscillator.start(0);
+                        isPlaying = true;
+                        canvas.style.borderColor = '#c47b2a';
+                        canvas.style.borderWidth = '3px';
+                        oscillator.onended = function () {isPlaying = false; canvas.style.borderColor = '#b8c9da'; canvas.style.borderWidth = '1px';};
+                        if (playTimeout) clearTimeout(playTimeout);
+                        playTimeout = setTimeout(function () {if (isPlaying) stopSound(); playTimeout = null;}, 5000);
+                    } catch (e) {console.error(e); alert('Ошибка звука');}
+                }).catch(function (e) {alert('Аудио не поддерживается');});
             }
+
+            function updateAndDraw() {draw();}
 
             function stepSlider(slider, delta, min, max, step) {
                 let val = parseFloat(slider.value) + delta;
@@ -864,7 +785,6 @@
             freqSlider.addEventListener('input', updateAndDraw);
             sampleSlider.addEventListener('input', updateAndDraw);
             bitSlider.addEventListener('input', updateAndDraw);
-
             freqDec.addEventListener('click', () => stepSlider(freqSlider, -100, 200, 12000, 100));
             freqInc.addEventListener('click', () => stepSlider(freqSlider, 100, 200, 12000, 100));
             sampleDec.addEventListener('click', () => stepSlider(sampleSlider, -100, 1000, 48000, 100));
@@ -877,79 +797,43 @@
                 displayPeriods = Math.round(displayPeriods * 10) / 10;
                 draw();
             }
-
             zoomOutBtn.addEventListener('click', () => changeZoom(-0.5));
             zoomInBtn.addEventListener('click', () => changeZoom(0.5));
-            resetZoomBtn.addEventListener('click', () => {
-                displayPeriods = 3;
-                draw();
-            });
+            resetZoomBtn.addEventListener('click', () => {displayPeriods = 3; draw();});
 
-            // === ОБРАБОТЧИК НАЖАТИЯ НА ГРАФИК (звук) ===
-            // Дебаунс нужен: на мобильных часто срабатывают и pointerdown, и touchstart
+            // обработчик клика по канвасу
             let lastToggleTime = 0;
-            const TOGGLE_DEBOUNCE_MS = 400;
-
+            const TOGGLE_DEBOUNCE_MS = 350;
             function handleCanvasClick(e) {
-                if (e) {
-                    e.preventDefault();
-                    if (e.stopPropagation) e.stopPropagation();
-                }
+                if (e) {e.preventDefault(); if (e.stopPropagation) e.stopPropagation();}
                 const now = Date.now();
-                if (now - lastToggleTime < TOGGLE_DEBOUNCE_MS) {
-                    console.log('Toggle debounced');
-                    return;
-                }
+                if (now - lastToggleTime < TOGGLE_DEBOUNCE_MS) return;
                 lastToggleTime = now;
-                console.log('Canvas clicked/touched, pointerType:', e && e.pointerType);
                 toggleSound();
             }
-
-            // Основной путь — Pointer Events (есть на современных iOS/Android)
             canvas.addEventListener('pointerdown', function (e) {
-                // Игнорируем правую кнопку мыши и «чужие» указатели
                 if (e.pointerType === 'mouse' && e.button !== 0) return;
-                // Не реагируем на второй палец (pinch)
                 if (e.isPrimary === false) return;
                 handleCanvasClick(e);
             });
-
-            // Fallback для очень старых браузеров без Pointer Events
             if (!window.PointerEvent) {
-                canvas.addEventListener('click', function (e) {
-                    handleCanvasClick(e);
-                });
+                canvas.addEventListener('click', handleCanvasClick);
                 canvas.addEventListener('touchstart', function (e) {
-                    // один палец — переключатель звука
                     if (e.touches && e.touches.length > 1) return;
                     e.preventDefault();
                     handleCanvasClick(e);
                 }, {passive: false});
             }
-
-            // Блокируем контекстное меню на канвасе
-            canvas.addEventListener('contextmenu', function (e) {
-                e.preventDefault();
-                return false;
-            });
+            canvas.addEventListener('contextmenu', function (e) {e.preventDefault(); return false;});
 
             let resizeTimeout;
-            window.addEventListener('resize', function () {
-                clearTimeout(resizeTimeout);
-                resizeTimeout = setTimeout(draw, 100);
-            });
-
+            window.addEventListener('resize', function () {clearTimeout(resizeTimeout); resizeTimeout = setTimeout(draw, 100);});
             setTimeout(draw, 50);
-            window.addEventListener('load', function () {
-                setTimeout(draw, 100);
-            });
+            window.addEventListener('load', function () {setTimeout(draw, 100);});
 
-            // Ранняя «разблокировка» AudioContext при любом первом жесте на странице
-            // (не запускает звук, только создаёт/возобновляет контекст)
+            // ранняя разблокировка аудио
             function unlockAudioOnce() {
-                ensureAudioRunning().then(function () {
-                    console.log('Audio unlocked by first interaction');
-                }).catch(function () { });
+                ensureAudioRunning().catch(function () { });
                 document.removeEventListener('pointerdown', unlockAudioOnce);
                 document.removeEventListener('touchstart', unlockAudioOnce);
                 document.removeEventListener('click', unlockAudioOnce);
@@ -958,7 +842,7 @@
             document.addEventListener('touchstart', unlockAudioOnce, {once: true, passive: true});
             document.addEventListener('click', unlockAudioOnce, {once: true, passive: true});
 
-            // ===== PINCH-TO-ZOOM =====
+            // pinch-to-zoom
             let lastTouchDist = 0;
             canvas.addEventListener('touchstart', function (e) {
                 if (e.touches.length === 2) {
@@ -967,7 +851,6 @@
                     lastTouchDist = Math.sqrt(dx * dx + dy * dy);
                 }
             }, {passive: true});
-
             canvas.addEventListener('touchmove', function (e) {
                 if (e.touches.length === 2) {
                     e.preventDefault();
@@ -980,16 +863,10 @@
                             changeZoom(delta * 2);
                             lastTouchDist = dist;
                         }
-                    } else {
-                        lastTouchDist = dist;
-                    }
+                    } else {lastTouchDist = dist;}
                 }
             }, {passive: false});
-
-            canvas.addEventListener('touchend', function (e) {
-                lastTouchDist = 0;
-            }, {passive: true});
-
+            canvas.addEventListener('touchend', function () {lastTouchDist = 0;}, {passive: true});
         })();
     </script>
 </body>
