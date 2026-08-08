@@ -127,15 +127,18 @@
             background: #1a2a3a;
             border: 2px solid #3a5a7a;
             color: #aabbcc;
-            font-size: clamp(14px, 2.2vw, 20px);
+            font-size: clamp(28px, 4.4vw, 40px);
+            /* увеличен в 2 раза */
             font-weight: 700;
-            padding: 6px 12px;
+            padding: 12px 24px;
+            /* увеличен в 2 раза */
             border-radius: 20px;
             cursor: pointer;
             touch-action: manipulation;
             transition: all 0.2s;
             font-family: inherit;
-            min-width: 44px;
+            min-width: 88px;
+            /* увеличен в 2 раза */
             text-align: center;
             line-height: 1.3;
             display: flex;
@@ -144,7 +147,8 @@
         }
 
         .scale-btn .label {
-            font-size: clamp(9px, 1.4vw, 13px);
+            font-size: clamp(18px, 2.8vw, 26px);
+            /* увеличен в 2 раза */
             font-weight: 500;
             color: #8899aa;
             line-height: 1.2;
@@ -223,15 +227,18 @@
             border: 2px solid #3a5a7a;
             color: #ffffff;
             background: #2a3f55;
-            font-size: clamp(13px, 2vw, 18px);
+            font-size: clamp(26px, 4vw, 36px);
+            /* увеличен в 2 раза */
             font-weight: 700;
-            padding: 6px 12px;
+            padding: 12px 24px;
+            /* увеличен в 2 раза */
             border-radius: 20px;
             cursor: pointer;
             touch-action: manipulation;
             transition: all 0.15s;
             font-family: inherit;
-            min-width: 52px;
+            min-width: 104px;
+            /* увеличен в 2 раза */
             text-align: center;
             line-height: 1.3;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
@@ -244,7 +251,8 @@
         }
 
         .fine-btn .label {
-            font-size: clamp(7px, 1.2vw, 11px);
+            font-size: clamp(14px, 2.4vw, 22px);
+            /* увеличен в 2 раза */
             font-weight: 500;
             color: #8899aa;
             line-height: 1.2;
@@ -605,13 +613,23 @@
             }
 
             .fine-btn {
-                font-size: 12px;
-                padding: 4px 10px;
-                min-width: 42px;
+                font-size: clamp(20px, 3vw, 28px);
+                padding: 8px 16px;
+                min-width: 80px;
             }
 
             .fine-btn .label {
-                font-size: 7px;
+                font-size: clamp(10px, 1.8vw, 16px);
+            }
+
+            .scale-btn {
+                font-size: clamp(20px, 3.4vw, 32px);
+                padding: 8px 16px;
+                min-width: 64px;
+            }
+
+            .scale-btn .label {
+                font-size: clamp(12px, 2vw, 18px);
             }
 
             #toggleBtn,
@@ -650,16 +668,6 @@
                 padding: 2px 10px 2px 6px;
             }
 
-            .scale-btn {
-                font-size: 12px;
-                padding: 4px 8px;
-                min-width: 34px;
-            }
-
-            .scale-btn .label {
-                font-size: 8px;
-            }
-
             .fine-tune-group {
                 min-width: 40px;
                 gap: 6px;
@@ -678,13 +686,24 @@
             }
 
             .fine-btn {
-                font-size: 10px;
-                padding: 3px 8px;
-                min-width: 34px;
+                font-size: clamp(16px, 2.4vw, 22px);
+                padding: 6px 12px;
+                min-width: 60px;
             }
 
             .fine-btn .label {
-                font-size: 6px;
+                font-size: clamp(8px, 1.4vw, 12px);
+            }
+
+            .scale-btn {
+                font-size: clamp(16px, 2.6vw, 24px);
+                padding: 6px 12px;
+                min-width: 48px;
+                border-radius: 14px;
+            }
+
+            .scale-btn .label {
+                font-size: clamp(10px, 1.6vw, 14px);
             }
 
             #toggleBtn,
@@ -726,17 +745,6 @@
                 padding: 2px 8px 2px 4px;
             }
 
-            .scale-btn {
-                font-size: 10px;
-                padding: 3px 6px;
-                min-width: 28px;
-                border-radius: 14px;
-            }
-
-            .scale-btn .label {
-                font-size: 7px;
-            }
-
             .fine-tune-group {
                 min-width: 32px;
                 gap: 4px;
@@ -749,23 +757,23 @@
             }
 
             .scale-btn {
-                font-size: 11px;
-                padding: 3px 6px;
-                min-width: 30px;
+                font-size: clamp(18px, 3vw, 26px);
+                padding: 6px 12px;
+                min-width: 56px;
             }
 
             .scale-btn .label {
-                font-size: 7px;
+                font-size: clamp(12px, 1.8vw, 16px);
             }
 
             .fine-btn {
-                font-size: 10px;
-                padding: 3px 8px;
-                min-width: 32px;
+                font-size: clamp(18px, 2.8vw, 24px);
+                padding: 6px 12px;
+                min-width: 64px;
             }
 
             .fine-btn .label {
-                font-size: 6px;
+                font-size: clamp(10px, 1.6vw, 14px);
             }
 
             .fine-tune-group {
