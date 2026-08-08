@@ -11,7 +11,6 @@
     <link rel="icon"
         href="data:image/svg+xml,&lt;svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'&gt;&lt;text y='.9em' font-size='90'&gt;〰️&lt;/text&gt;&lt;/svg&gt;">
     <style>
-        /* Все ваши стили остаются без изменений, кроме небольших дополнений для компактности чипов MP3 */
         * {
             margin: 0;
             padding: 0;
@@ -28,8 +27,8 @@
         }
 
         body {
-            background: #0b0e14;
-            color: #ffffff;
+            background: #f0f4f8;
+            color: #1a1f2a;
             font-family: -apple-system, 'Segoe UI', Roboto, sans-serif;
             display: flex;
             flex-direction: column;
@@ -64,23 +63,23 @@
             font-size: clamp(32px, 10vw, 56px);
             font-weight: 700;
             letter-spacing: 1px;
-            color: #e8e8e8;
-            text-shadow: 0 0 20px rgba(100, 200, 255, 0.15);
+            color: #0b3b5c;
+            text-shadow: 0 0 20px rgba(11, 59, 92, 0.08);
             line-height: 1.2;
         }
 
         #freqUnit {
             font-size: 0.4em;
             font-weight: 400;
-            color: #8899aa;
+            color: #4a607a;
             margin-left: 4px;
         }
 
         #freqInput {
-            background: #1a2a3a;
-            border: 2px solid #4a6a8a;
+            background: #ffffff;
+            border: 2px solid #b8c9da;
             border-radius: 12px;
-            color: #fff;
+            color: #1a2f44;
             font-size: clamp(20px, 5vw, 32px);
             font-weight: 600;
             width: clamp(100px, 22vw, 160px);
@@ -90,6 +89,7 @@
             transition: border-color 0.2s;
             font-family: inherit;
             -moz-appearance: textfield;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
         }
 
         #freqInput::-webkit-outer-spin-button,
@@ -99,8 +99,8 @@
         }
 
         #freqInput:focus {
-            border-color: #8ecae6;
-            box-shadow: 0 0 20px rgba(100, 200, 255, 0.2);
+            border-color: #2d6a8f;
+            box-shadow: 0 0 0 3px rgba(45, 106, 143, 0.15);
         }
 
         #sliderWrapper {
@@ -124,51 +124,48 @@
         }
 
         .scale-btn {
-            background: #1a2a3a;
-            border: 2px solid #3a5a7a;
-            color: #aabbcc;
+            background: #e8edf2;
+            border: 2px solid #c7d6e5;
+            color: #4a607a;
             font-size: clamp(28px, 4.4vw, 40px);
-            /* увеличен в 2 раза */
             font-weight: 700;
             padding: 12px 24px;
-            /* увеличен в 2 раза */
             border-radius: 20px;
             cursor: pointer;
             touch-action: manipulation;
             transition: all 0.2s;
             font-family: inherit;
             min-width: 88px;
-            /* увеличен в 2 раза */
             text-align: center;
             line-height: 1.3;
             display: flex;
             flex-direction: column;
             align-items: center;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
         }
 
         .scale-btn .label {
             font-size: clamp(18px, 2.8vw, 26px);
-            /* увеличен в 2 раза */
             font-weight: 500;
-            color: #8899aa;
+            color: #6a7f99;
             line-height: 1.2;
             margin-top: 2px;
             letter-spacing: 0.3px;
         }
 
         .scale-btn.active {
-            border-color: #8ecae6;
-            background: #2a4a6a;
-            color: #ffffff;
-            box-shadow: 0 0 20px rgba(100, 200, 255, 0.25);
+            border-color: #2d6a8f;
+            background: #d5e3f0;
+            color: #0b3b5c;
+            box-shadow: 0 0 0 3px rgba(45, 106, 143, 0.12);
         }
 
         .scale-btn.active .label {
-            color: #b0d8f0;
+            color: #1a4a6a;
         }
 
         .scale-btn:active {
-            transform: scale(0.92);
+            transform: scale(0.94);
         }
 
         #freqSlider {
@@ -177,11 +174,12 @@
             -webkit-appearance: none;
             appearance: none;
             border-radius: 19px;
-            background: linear-gradient(to right, #4a6fa5, #8ecae6, #f9c74f, #f9844a, #e63946);
+            background: linear-gradient(to right, #6a8fbb, #2d6a8f, #c47b2a, #c92a3a);
             outline: none;
             cursor: pointer;
             touch-action: none;
             transform: rotate(-90deg);
+            box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.08);
         }
 
         #freqSlider::-webkit-slider-thumb {
@@ -191,7 +189,7 @@
             height: 32px;
             border-radius: 50%;
             background: #ffffff;
-            box-shadow: 0 0 20px rgba(255, 255, 255, 0.6), 0 4px 12px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.15), 0 4px 12px rgba(0, 0, 0, 0.1);
             border: 2px solid #ffffff;
             transition: 0.1s;
             touch-action: none;
@@ -199,7 +197,7 @@
 
         #freqSlider::-webkit-slider-thumb:active {
             transform: scale(1.15);
-            box-shadow: 0 0 30px rgba(255, 255, 255, 0.9);
+            box-shadow: 0 0 30px rgba(45, 106, 143, 0.3);
         }
 
         #freqSlider::-moz-range-thumb {
@@ -207,7 +205,7 @@
             height: 32px;
             border-radius: 50%;
             background: #ffffff;
-            box-shadow: 0 0 20px rgba(255, 255, 255, 0.6);
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
             border: 2px solid #ffffff;
             cursor: pointer;
             touch-action: none;
@@ -223,28 +221,21 @@
         }
 
         .fine-btn {
-            background: #1a2a3a;
-            border: 2px solid #3a5a7a;
-            color: #ffffff;
-            background: #2a3f55;
+            background: #e8edf2;
+            border: 2px solid #c7d6e5;
+            color: #1a2f44;
             font-size: clamp(26px, 4vw, 36px);
-            /* увеличен в 2 раза */
             font-weight: 700;
             padding: 12px 24px;
-            /* увеличен в 2 раза */
             border-radius: 20px;
             cursor: pointer;
             touch-action: manipulation;
             transition: all 0.15s;
             font-family: inherit;
             min-width: 104px;
-            /* увеличен в 2 раза */
             text-align: center;
             line-height: 1.3;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
-            border-color: #5a7a9a;
-            background: #2a3f55;
-            color: #ffffff;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -252,17 +243,16 @@
 
         .fine-btn .label {
             font-size: clamp(14px, 2.4vw, 22px);
-            /* увеличен в 2 раза */
             font-weight: 500;
-            color: #8899aa;
+            color: #6a7f99;
             line-height: 1.2;
             margin-top: 1px;
             letter-spacing: 0.3px;
         }
 
         .fine-btn:active {
-            transform: scale(0.92);
-            background: #3a5a7a;
+            transform: scale(0.94);
+            background: #d5e0eb;
         }
 
         .controls-row {
@@ -276,19 +266,18 @@
         }
 
         #toggleBtn {
-            background: #2a3a4a;
-            border: none;
-            color: #fff;
+            background: #d5e3f0;
+            border: 2px solid #b8c9da;
+            color: #0b3b5c;
             font-size: clamp(16px, 4vw, 20px);
             font-weight: 600;
             padding: 10px 28px;
             border-radius: 50px;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
             letter-spacing: 1px;
             transition: all 0.25s ease;
             touch-action: manipulation;
             cursor: pointer;
-            border: 1px solid #4a6a8a;
             flex: 0 1 auto;
             min-width: 140px;
         }
@@ -298,15 +287,16 @@
         }
 
         #toggleBtn.active {
-            background: #4a8a6a;
-            border-color: #6ab08a;
-            box-shadow: 0 0 30px rgba(74, 138, 106, 0.4);
+            background: #2a7a5a;
+            border-color: #4a9a6a;
+            color: #ffffff;
+            box-shadow: 0 0 30px rgba(42, 122, 90, 0.25);
         }
 
         #toggleBtn.waiting {
-            background: #6a4a3a;
-            border-color: #8a6a4a;
-            box-shadow: 0 0 20px rgba(200, 150, 50, 0.2);
+            background: #d4a040;
+            border-color: #c49030;
+            color: #ffffff;
             animation: pulse 1.2s ease-in-out infinite;
         }
 
@@ -326,14 +316,15 @@
             display: flex;
             align-items: center;
             gap: 6px;
-            background: #1a2a3a;
+            background: #ffffff;
             padding: 4px 12px 4px 8px;
             border-radius: 50px;
-            border: 1px solid #4a6a8a;
+            border: 2px solid #c7d6e5;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
         }
 
         .duration-group label {
-            color: #8899aa;
+            color: #4a607a;
             font-size: clamp(13px, 2.5vw, 16px);
             font-weight: 500;
         }
@@ -341,7 +332,7 @@
         #durationInput {
             background: transparent;
             border: none;
-            color: #fff;
+            color: #1a2f44;
             font-size: clamp(16px, 4vw, 22px);
             font-weight: 600;
             width: clamp(70px, 16vw, 110px);
@@ -359,24 +350,23 @@
         }
 
         .duration-group span {
-            color: #8899aa;
+            color: #4a607a;
             font-size: clamp(13px, 2.5vw, 16px);
         }
 
         #downloadBtn {
-            background: #3a3f5a;
-            border: none;
-            color: #fff;
+            background: #e3eaf2;
+            border: 2px solid #b8c9da;
+            color: #0b3b5c;
             font-size: clamp(16px, 4vw, 20px);
             font-weight: 600;
             padding: 10px 28px;
             border-radius: 50px;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
             letter-spacing: 1px;
             transition: all 0.25s ease;
             touch-action: manipulation;
             cursor: pointer;
-            border: 1px solid #6a7a9a;
             flex: 0 1 auto;
         }
 
@@ -396,16 +386,16 @@
         }
 
         #demoBtn {
-            background: #2a1a3a;
-            border: 2px solid #8a4a6a;
-            color: #ddaacc;
+            background: #e8edf2;
+            border: 2px solid #c7d6e5;
+            color: #1a2f44;
             font-size: clamp(14px, 3vw, 18px);
             font-weight: 600;
             padding: 8px 24px;
             border-radius: 50px;
-            box-shadow: 0 0 20px rgba(200, 100, 255, 0.15);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
             letter-spacing: 0.5px;
-            transition: all 0.25s ease;
+            transition: all 0.2s ease;
             touch-action: manipulation;
             cursor: pointer;
             font-family: inherit;
@@ -417,10 +407,9 @@
         }
 
         #demoBtn:hover {
-            background: #3a2a4a;
-            border-color: #aa6a8a;
-            box-shadow: 0 0 30px rgba(200, 100, 255, 0.3);
-            transform: scale(1.02);
+            background: #d5e3f0;
+            border-color: #2d6a8f;
+            box-shadow: 0 0 20px rgba(45, 106, 143, 0.1);
         }
 
         #demoBtn:active {
@@ -437,13 +426,13 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: #121820;
-            border-top: 1px solid #2a4b62;
+            background: #ffffff;
+            border-top: 2px solid #c7d6e5;
             padding: 14px 12px 20px;
             z-index: 100;
             transform: translateY(100%);
             transition: transform 0.28s ease;
-            box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.55);
+            box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.1);
             max-height: 70vh;
             overflow-y: auto;
         }
@@ -466,9 +455,10 @@
 
         .wav-row label {
             font-size: 13px;
-            color: #8899aa;
+            color: #4a607a;
             min-width: 48px;
             flex-shrink: 0;
+            font-weight: 600;
         }
 
         .wav-chips {
@@ -479,9 +469,9 @@
         }
 
         .wav-chip {
-            background: #1a2a3a;
-            border: 1.5px solid #3a5a7a;
-            color: #aabbcc;
+            background: #eef3f8;
+            border: 1.5px solid #c7d6e5;
+            color: #2a4055;
             font-size: 13px;
             font-weight: 600;
             padding: 7px 11px;
@@ -498,10 +488,10 @@
         }
 
         .wav-chip.active {
-            background: #2a4a6a;
-            border-color: #8ecae6;
-            color: #fff;
-            box-shadow: 0 0 12px rgba(100, 200, 255, 0.2);
+            background: #d5e3f0;
+            border-color: #2d6a8f;
+            color: #0b3b5c;
+            box-shadow: 0 0 0 2px rgba(45, 106, 143, 0.15);
         }
 
         .wav-chip:active {
@@ -532,7 +522,7 @@
         }
 
         #wavDownloadConfirm {
-            background: #2a6a4a;
+            background: #2a7a5a;
             color: #fff;
             border: 1px solid #4a9a6a;
         }
@@ -542,14 +532,18 @@
         }
 
         #wavPanelClose {
-            background: #2a3a4a;
-            color: #aabbcc;
-            border: 1px solid #4a5a6a;
+            background: #e8edf2;
+            color: #2a4055;
+            border: 1px solid #c7d6e5;
+        }
+
+        #wavPanelClose:active {
+            transform: scale(0.96);
         }
 
         #hint {
             font-size: clamp(11px, 2.5vw, 13px);
-            color: #556677;
+            color: #6a7f99;
             letter-spacing: 0.5px;
             flex-shrink: 0;
             margin-top: 0;
@@ -560,16 +554,16 @@
             flex: 0 0 auto;
             text-align: center;
             font-size: clamp(12px, 2.8vw, 14px);
-            border-top: 1px solid #2a4b62;
+            border-top: 1px solid #c7d6e5;
             padding: 10px 0 4px 0;
             width: 100%;
             max-width: 750px;
             margin: 0 auto;
-            background: #0b0e14;
+            background: #f0f4f8;
         }
 
         .footer-links a {
-            color: #7a5a3a;
+            color: #4a607a;
             text-decoration: none;
             margin: 0 8px;
         }
@@ -581,13 +575,13 @@
         /* Подсказка для MP3 */
         .mp3-hint {
             display: none;
-            background: #1a2a3a;
-            border: 1px solid #4a6a8a;
+            background: #eef3f8;
+            border: 1px solid #c7d6e5;
             border-radius: 8px;
             padding: 8px 12px;
             margin-top: 6px;
             font-size: 11px;
-            color: #8899aa;
+            color: #4a607a;
             text-align: center;
             line-height: 1.4;
         }
@@ -863,7 +857,6 @@
             <div class="wav-row" id="rateRow">
                 <label>кГц</label>
                 <div class="wav-chips" id="rateChips">
-                    <!-- НОВОЕ: полный набор частот -->
                     <button class="wav-chip small" data-rate="8000">8</button>
                     <button class="wav-chip small" data-rate="16000">16</button>
                     <button class="wav-chip small" data-rate="22050">22.05</button>
@@ -923,7 +916,8 @@
     </div>
 
     <!-- Подключаем lamejs для MP3 -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/lamejs/1.2.1/lame.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lamejs/1.2.1/lame.min.js">
+    </script>
 
     <script>
         (function () {
@@ -1351,7 +1345,7 @@
                     lameLoaded = true;
                     mp3Hint.innerHTML = '✅ MP3 готов к работе (до 48 кГц)';
                     mp3Hint.style.borderColor = '#4a9a6a';
-                    mp3Hint.style.color = '#8ecae6';
+                    mp3Hint.style.color = '#1f6a4a';
                 }
             }
             setTimeout(checkLameLoaded, 1000);
@@ -1385,7 +1379,8 @@
                             if (chip.classList.contains('active')) {
                                 chip.classList.remove('active');
                                 // Выбираем первую поддерживаемую
-                                const firstSupported = document.querySelector('#rateChips .wav-chip:not(.disabled)');
+                                const firstSupported = document.querySelector(
+                                    '#rateChips .wav-chip:not(.disabled)');
                                 if (firstSupported) {
                                     firstSupported.classList.add('active');
                                     selectedRate = parseInt(firstSupported.dataset.rate, 10);
@@ -1419,7 +1414,8 @@
             // Выбор формата
             document.querySelectorAll('#formatChips .wav-chip').forEach(btn => {
                 btn.addEventListener('click', function () {
-                    document.querySelectorAll('#formatChips .wav-chip').forEach(b => b.classList.remove('active'));
+                    document.querySelectorAll('#formatChips .wav-chip').forEach(b => b.classList.remove(
+                        'active'));
                     this.classList.add('active');
                     selectedFormat = this.dataset.format;
                     updatePanelVisibility();
@@ -1430,7 +1426,8 @@
             document.querySelectorAll('#rateChips .wav-chip').forEach(btn => {
                 btn.addEventListener('click', function () {
                     if (this.classList.contains('disabled')) return;
-                    document.querySelectorAll('#rateChips .wav-chip').forEach(b => b.classList.remove('active'));
+                    document.querySelectorAll('#rateChips .wav-chip').forEach(b => b.classList.remove(
+                        'active'));
                     this.classList.add('active');
                     selectedRate = parseInt(this.dataset.rate, 10);
                 });
@@ -1439,7 +1436,8 @@
             // PCM bits
             document.querySelectorAll('#bitChips .wav-chip').forEach(btn => {
                 btn.addEventListener('click', function () {
-                    document.querySelectorAll('#bitChips .wav-chip').forEach(b => b.classList.remove('active'));
+                    document.querySelectorAll('#bitChips .wav-chip').forEach(b => b.classList.remove(
+                        'active'));
                     this.classList.add('active');
                     selectedBits = parseInt(this.dataset.bits, 10);
                 });
@@ -1448,7 +1446,8 @@
             // MP3 bitrate
             document.querySelectorAll('#mp3Chips .wav-chip').forEach(btn => {
                 btn.addEventListener('click', function () {
-                    document.querySelectorAll('#mp3Chips .wav-chip').forEach(b => b.classList.remove('active'));
+                    document.querySelectorAll('#mp3Chips .wav-chip').forEach(b => b.classList.remove(
+                        'active'));
                     this.classList.add('active');
                     selectedMp3Bitrate = parseInt(this.dataset.mp3, 10);
                 });
