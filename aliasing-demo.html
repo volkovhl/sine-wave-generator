@@ -75,6 +75,27 @@
             touch-action: none;
         }
 
+        .canvas-tap-hint {
+            text-align: center;
+            font-size: 13px;
+            color: #8899aa;
+            margin-bottom: 6px;
+            letter-spacing: 0.2px;
+        }
+
+        .canvas-tap-hint span {
+            display: inline-block;
+            padding: 3px 12px;
+            border-radius: 20px;
+            background: #1a2230;
+            border: 1px solid #2a4b62;
+            color: #b0c0d0;
+        }
+
+        .canvas-tap-hint .tap-icon {
+            margin-right: 4px;
+        }
+
         canvas {
             width: 100%;
             height: auto;
@@ -257,8 +278,7 @@
 
         .legend-item .line.reconstructed {
             background: #f9c74f;
-            border-top: 2px dashed #f9c74f;
-            height: 0;
+            height: 3px;
         }
 
         .legend-item .line.quantized {
@@ -398,6 +418,7 @@
             <span class="highlight">3 кГц</span>!
         </div>
 
+        <div class="canvas-tap-hint"><span><span class="tap-icon">🎵</span>Нажмите на график</span></div>
         <div class="canvas-wrapper">
             <canvas id="canvas"></canvas>
         </div>
@@ -453,21 +474,16 @@
                 <div class="line original"></div><span>Исходный сигнал (гладкий)</span>
             </div>
             <div class="legend-item">
-                <div class="line samples"></div><span>Отсчёты (сэмплы) в красном</span>
+                <div class="line samples"></div><span>Квантованные сэмплы</span>
             </div>
             <div class="legend-item">
-                <div class="line reconstructed"></div><span>Восстановленный сигнал (алиасинг)</span>
+                <div class="line reconstructed"></div><span>Восстановленный (ступени + алиасинг)</span>
             </div>
             <div class="legend-item">
-                <div class="line quantized"></div><span>Квантование (ступеньки)</span>
+                <div class="line quantized"></div><span>Уровни квантования</span>
             </div>
         </div>
-        <div class="audio-hint">
-            <span class="icon">🎵</span>
-            Нажмите на график — включится звук (переключатель)!
-            <span style="color:#e63946;">Красные точки</span> = сэмплы,
-            <span style="color:#f9c74f;">жёлтая линия</span> = то, что вы услышите
-        </div>
+
     </div>
     <div class="footer-links">
         <a href="https://volkovhl.github.io/" target="_blank">volkovhl.github.io</a> |
@@ -520,11 +536,10 @@
 
             function calculateAlias(freq, sampleRate) {
                 if (freq <= 0 || sampleRate <= 0) return 0;
-                const ratio = freq / sampleRate;
-                const n = Math.round(ratio);
-                if (n === 0) return freq;
-                const alias = Math.abs(freq - sampleRate * n);
-                return Math.min(alias, sampleRate / 2);
+                // Правильное «складывание» частоты в зону Найквиста [0, fs/2]
+                let f = Math.abs(freq) % sampleRate;
+                if (f > sampleRate / 2) f = sampleRate - f;
+                return f;
             }
 
             function draw() {
@@ -538,12 +553,12 @@
                 const params = getParams();
                 const {freq, sampleRate, bits} = params;
                 const aliasFreq = calculateAlias(freq, sampleRate);
-                const ratio = freq / sampleRate;
-                const n = Math.round(ratio);
+                const nyquist = sampleRate / 2;
+                const hasAlias = Math.abs(aliasFreq - freq) > 0.5; // допуск на float
 
                 formulaFreq.textContent = freq.toFixed(0);
                 formulaSample.textContent = sampleRate.toFixed(0);
-                if (n === 0) {
+                if (!hasAlias) {
                     formulaResult.textContent = freq.toFixed(0) + ' Гц (нет алиасинга)';
                 } else {
                     formulaResult.textContent = aliasFreq.toFixed(0) + ' Гц';
@@ -579,66 +594,94 @@
                 ctx.stroke();
                 ctx.globalAlpha = 1;
 
-                const levels = Math.pow(2, bits);
-                ctx.strokeStyle = '#6a5a7a';
-                ctx.lineWidth = 0.5;
-                ctx.globalAlpha = 0.2;
-                for (let lv = 0; lv <= levels; lv++) {
-                    const yPos = margin.top + lv * (plotH / levels);
-                    ctx.beginPath();
-                    ctx.moveTo(margin.left, yPos);
-                    ctx.lineTo(margin.left + plotW, yPos);
-                    ctx.stroke();
+                // --- Квантование по амплитуде (битность) ---
+                // bipolar: уровни от -1 до +1, число ступенек = 2^bits
+                const quantSteps = Math.pow(2, bits);
+                function quantize(val) {
+                    // val в [-1, 1] → ближайший уровень
+                    const u = (val + 1) / 2; // [0, 1]
+                    const q = Math.round(u * (quantSteps - 1)) / (quantSteps - 1);
+                    return q * 2 - 1;
                 }
-                ctx.globalAlpha = 1;
 
-                const sampleStep = Math.max(1, Math.floor(sampleRate / freq / 2));
-                const sampleCount = Math.min(Math.floor(totalPoints / sampleStep), 120);
+                // Линии уровней — только при низкой разрядности, иначе не видны
+                if (bits <= 6) {
+                    ctx.strokeStyle = '#6a5a7a';
+                    ctx.lineWidth = 0.5;
+                    ctx.globalAlpha = bits <= 3 ? 0.45 : 0.25;
+                    for (let lv = 0; lv < quantSteps; lv++) {
+                        const qVal = (lv / (quantSteps - 1)) * 2 - 1; // -1 .. +1
+                        const yPos = centerY - amplitude * qVal;
+                        ctx.beginPath();
+                        ctx.moveTo(margin.left, yPos);
+                        ctx.lineTo(margin.left + plotW, yPos);
+                        ctx.stroke();
+                    }
+                    ctx.globalAlpha = 1;
+                }
 
+                // Сэмплы с правильным шагом по времени (1 / sampleRate)
+                const durationSec = periods / freq;
+                const sampleCount = Math.min(160, Math.max(2, Math.floor(sampleRate * durationSec) + 1));
+
+                const sampleX = [];
+                const sampleY = []; // квантованные Y на канвасе
+                const sampleYcont = []; // непрерывные (для «хвостов» ошибки)
+
+                for (let i = 0; i < sampleCount; i++) {
+                    const tSec = i / sampleRate;
+                    if (tSec > durationSec + 1e-12) break;
+                    const phase = 2 * Math.PI * freq * tSec;
+                    const cont = Math.sin(phase);           // [-1, 1]
+                    const q = quantize(cont);
+                    const x = margin.left + (tSec / durationSec) * plotW;
+                    const yQ = centerY - amplitude * q;
+                    const yC = centerY - amplitude * cont;
+                    sampleX.push(x);
+                    sampleY.push(yQ);
+                    sampleYcont.push(yC);
+                }
+
+                // Тонкие линии ошибки квантования (от синуса к уровню) — при низкой битности
+                if (bits <= 5 && sampleX.length > 0) {
+                    ctx.strokeStyle = '#e63946';
+                    ctx.lineWidth = 1;
+                    ctx.globalAlpha = 0.35;
+                    for (let i = 0; i < sampleX.length; i++) {
+                        ctx.beginPath();
+                        ctx.moveTo(sampleX[i], sampleYcont[i]);
+                        ctx.lineTo(sampleX[i], sampleY[i]);
+                        ctx.stroke();
+                    }
+                    ctx.globalAlpha = 1;
+                }
+
+                // Красные точки — квантованные сэмплы
                 ctx.fillStyle = '#e63946';
                 ctx.shadowColor = '#e63946';
                 ctx.shadowBlur = 8;
-
-                const sampleX = [];
-                const sampleY = [];
-
-                for (let i = 0; i < sampleCount && i * sampleStep <= totalPoints; i++) {
-                    const idx = i * sampleStep;
-                    const x = margin.left + idx * stepX;
-                    const t = (idx / totalPoints) * periods * 2 * Math.PI;
-                    const y = centerY - amplitude * Math.sin(t);
-                    sampleX.push(x);
-                    sampleY.push(y);
-
+                const dotR = Math.max(4, w / 130);
+                for (let i = 0; i < sampleX.length; i++) {
                     ctx.beginPath();
-                    ctx.arc(x, y, Math.max(4, w / 130), 0, 2 * Math.PI);
+                    ctx.arc(sampleX[i], sampleY[i], dotR, 0, 2 * Math.PI);
                     ctx.fill();
                 }
                 ctx.shadowBlur = 0;
 
                 if (sampleX.length > 1) {
+                    // Жёлтая линия: ступенчатая (zero-order hold) — так лучше видно квантование
+                    // + пунктир линейной интерполяции для «восстановленного» вида
                     ctx.beginPath();
                     ctx.strokeStyle = '#f9c74f';
                     ctx.lineWidth = 2.5;
-                    ctx.setLineDash([6, 6]);
-                    ctx.globalAlpha = 0.9;
-
+                    ctx.globalAlpha = 0.95;
+                    ctx.moveTo(sampleX[0], sampleY[0]);
                     for (let i = 0; i < sampleX.length - 1; i++) {
-                        const x0 = sampleX[i];
-                        const y0 = sampleY[i];
-                        const x1 = sampleX[i + 1];
-                        const y1 = sampleY[i + 1];
-                        const steps = 8;
-                        for (let j = 0; j <= steps; j++) {
-                            const t = j / steps;
-                            const x = x0 + (x1 - x0) * t;
-                            const y = y0 + (y1 - y0) * t;
-                            if (i === 0 && j === 0) ctx.moveTo(x, y);
-                            else ctx.lineTo(x, y);
-                        }
+                        // горизонталь до следующего сэмпла, потом вертикаль (ZOH)
+                        ctx.lineTo(sampleX[i + 1], sampleY[i]);
+                        ctx.lineTo(sampleX[i + 1], sampleY[i + 1]);
                     }
                     ctx.stroke();
-                    ctx.setLineDash([]);
                     ctx.globalAlpha = 1;
 
                     ctx.fillStyle = '#f9c74f';
@@ -661,9 +704,9 @@
                     ctx.textAlign = 'right';
                     ctx.textBaseline = 'bottom';
                     const sp = (sampleRate / freq);
-                    ctx.fillText(`${sp.toFixed(2)} сэмплов/период`, margin.left + plotW - 8, margin.top + plotH);
+                    ctx.fillText(`${sp.toFixed(2)} сэмплов/период · ${bits} бит`, margin.left + plotW - 8, margin.top + plotH);
 
-                    if (aliasFreq !== freq && aliasFreq > 0) {
+                    if (Math.abs(aliasFreq - freq) > 0.5 && aliasFreq > 0) {
                         ctx.fillStyle = '#f9844a';
                         ctx.textAlign = 'center';
                         ctx.textBaseline = 'top';
@@ -681,36 +724,60 @@
                 }
             }
 
-            // === ИСПРАВЛЕННАЯ ФУНКЦИЯ ИНИЦИАЛИЗАЦИИ АУДИО ===
+            // === АУДИО: корректная инициализация для iOS / Android ===
+            // resume() асинхронный — без await звук на тачскрине часто не стартует
             function initAudio() {
-                if (audioInitialized) return;
+                if (audioCtx) return Promise.resolve(audioCtx);
                 try {
                     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                    // ВАЖНО: возобновляем контекст, если он приостановлен
-                    if (audioCtx.state === 'suspended') {
-                        audioCtx.resume();
-                    }
                     audioInitialized = true;
-                    console.log('Audio initialized, state:', audioCtx.state);
+                    console.log('AudioContext created, state:', audioCtx.state);
+                    return Promise.resolve(audioCtx);
                 } catch (e) {
                     console.warn('Audio not supported:', e);
+                    return Promise.reject(e);
                 }
             }
 
+            function ensureAudioRunning() {
+                return initAudio().then(function (ctx) {
+                    if (ctx.state === 'suspended') {
+                        return ctx.resume().then(function () {
+                            console.log('AudioContext resumed, state:', ctx.state);
+                            return ctx;
+                        });
+                    }
+                    return ctx;
+                });
+            }
+
+            function stopSound() {
+                try {
+                    if (oscillator) {
+                        oscillator.onended = null;
+                        oscillator.stop(0);
+                        oscillator.disconnect();
+                        oscillator = null;
+                    }
+                    if (gainNode) {
+                        gainNode.disconnect();
+                        gainNode = null;
+                    }
+                    if (playTimeout) {
+                        clearTimeout(playTimeout);
+                        playTimeout = null;
+                    }
+                } catch (e) { /* игнор */}
+                isPlaying = false;
+                canvas.style.borderColor = '#2a4b62';
+                canvas.style.borderWidth = '1px';
+            }
+
             function toggleSound() {
-                // Сначала инициализируем аудио
-                if (!audioInitialized) {
-                    initAudio();
-                }
-
-                if (!audioCtx) {
-                    alert('Аудио не поддерживается в этом браузере');
+                if (isPlaying) {
+                    stopSound();
+                    console.log('Sound stopped');
                     return;
-                }
-
-                // ВАЖНО: всегда возобновляем контекст перед использованием
-                if (audioCtx.state === 'suspended') {
-                    audioCtx.resume();
                 }
 
                 const params = getParams();
@@ -720,84 +787,69 @@
                     playFreq = 440;
                 }
 
-                if (isPlaying) {
-                    // Останавливаем звук
-                    try {
-                        if (oscillator) {
-                            oscillator.stop(0);
-                            oscillator.disconnect();
-                            oscillator = null;
-                        }
-                        if (gainNode) {
-                            gainNode.disconnect();
-                            gainNode = null;
-                        }
-                        if (playTimeout) {
-                            clearTimeout(playTimeout);
-                            playTimeout = null;
-                        }
-                    } catch (e) { /* игнор */}
-                    isPlaying = false;
-                    canvas.style.borderColor = '#2a4b62';
-                    canvas.style.borderWidth = '1px';
-                    console.log('Sound stopped');
-                    return;
-                }
+                // resume + start строго внутри жеста пользователя (критично для мобильных)
+                ensureAudioRunning().then(function (ctx) {
+                    if (!ctx) {
+                        alert('Аудио не поддерживается в этом браузере');
+                        return;
+                    }
+                    // на всякий случай ещё раз, если браузер снова приостановил
+                    const startOsc = function () {
+                        try {
+                            if (isPlaying) return; // защита от двойного вызова
+                            oscillator = ctx.createOscillator();
+                            gainNode = ctx.createGain();
+                            oscillator.type = 'sine';
+                            oscillator.frequency.value = playFreq;
+                            gainNode.gain.setValueAtTime(0.25, ctx.currentTime);
+                            oscillator.connect(gainNode);
+                            gainNode.connect(ctx.destination);
+                            oscillator.start(0);
+                            isPlaying = true;
+                            canvas.style.borderColor = '#f9c74f';
+                            canvas.style.borderWidth = '3px';
+                            console.log('Sound started, frequency:', playFreq, 'ctx state:', ctx.state);
 
-                // Запускаем звук
-                try {
-                    oscillator = audioCtx.createOscillator();
-                    gainNode = audioCtx.createGain();
-                    oscillator.type = 'sine';
-                    oscillator.frequency.value = playFreq;
-                    gainNode.gain.setValueAtTime(0.25, audioCtx.currentTime);
-                    oscillator.connect(gainNode);
-                    gainNode.connect(audioCtx.destination);
-                    oscillator.start(0);
-                    isPlaying = true;
-                    canvas.style.borderColor = '#f9c74f';
-                    canvas.style.borderWidth = '3px';
-                    console.log('Sound started, frequency:', playFreq);
+                            oscillator.onended = function () {
+                                isPlaying = false;
+                                canvas.style.borderColor = '#2a4b62';
+                                canvas.style.borderWidth = '1px';
+                            };
 
-                    oscillator.onended = function () {
-                        isPlaying = false;
-                        canvas.style.borderColor = '#2a4b62';
-                        canvas.style.borderWidth = '1px';
+                            if (playTimeout) clearTimeout(playTimeout);
+                            playTimeout = setTimeout(function () {
+                                if (isPlaying) stopSound();
+                                playTimeout = null;
+                            }, 5000);
+                        } catch (e) {
+                            console.error('Audio error:', e);
+                            alert('Ошибка звука: ' + e.message);
+                        }
                     };
 
-                    if (playTimeout) clearTimeout(playTimeout);
-                    playTimeout = setTimeout(() => {
-                        if (isPlaying) {
-                            try {
-                                oscillator.stop(0);
-                                oscillator.disconnect();
-                                gainNode.disconnect();
-                            } catch (e) { /* игнор */}
-                            isPlaying = false;
-                            canvas.style.borderColor = '#2a4b62';
-                            canvas.style.borderWidth = '1px';
-                        }
-                        playTimeout = null;
-                    }, 5000);
-
-                } catch (e) {
-                    console.error('Audio error:', e);
-                    alert('Ошибка звука: ' + e.message);
-                }
+                    if (ctx.state === 'running') {
+                        startOsc();
+                    } else {
+                        ctx.resume().then(startOsc).catch(function (e) {
+                            console.error('resume failed:', e);
+                        });
+                    }
+                }).catch(function (e) {
+                    console.error('ensureAudioRunning failed:', e);
+                    alert('Аудио не поддерживается в этом браузере');
+                });
             }
 
             function updateAndDraw() {
                 draw();
-                if (isPlaying) {
+                if (isPlaying && oscillator && audioCtx) {
                     const params = getParams();
                     const aliasFreq = calculateAlias(params.freq, params.sampleRate);
                     let playFreq = aliasFreq;
                     if (playFreq < 20 || playFreq > 20000) playFreq = 440;
-                    if (oscillator) {
-                        try {
-                            oscillator.frequency.setTargetAtTime(playFreq, audioCtx.currentTime, 0.01);
-                        } catch (e) { /* игнор */}
-                    }
+                    try {
+                        oscillator.frequency.setTargetAtTime(playFreq, audioCtx.currentTime, 0.01);
+                    } catch (e) { /* игнор */}
                 }
             }
 
@@ -833,38 +885,49 @@
                 draw();
             });
 
-            // === ИСПРАВЛЕННЫЙ ОБРАБОТЧИК ДЛЯ КАНВАСА ===
+            // === ОБРАБОТЧИК НАЖАТИЯ НА ГРАФИК (звук) ===
+            // Дебаунс нужен: на мобильных часто срабатывают и pointerdown, и touchstart
+            let lastToggleTime = 0;
+            const TOGGLE_DEBOUNCE_MS = 400;
+
             function handleCanvasClick(e) {
-                e.preventDefault();
-                console.log('Canvas clicked/touched');
-                initAudio(); // Инициализируем аудио при клике
+                if (e) {
+                    e.preventDefault();
+                    if (e.stopPropagation) e.stopPropagation();
+                }
+                const now = Date.now();
+                if (now - lastToggleTime < TOGGLE_DEBOUNCE_MS) {
+                    console.log('Toggle debounced');
+                    return;
+                }
+                lastToggleTime = now;
+                console.log('Canvas clicked/touched, pointerType:', e && e.pointerType);
                 toggleSound();
             }
 
-            // Универсальный обработчик для всех типов ввода
+            // Основной путь — Pointer Events (есть на современных iOS/Android)
             canvas.addEventListener('pointerdown', function (e) {
-                // Для мыши — только левая кнопка
-                if (e.pointerType === 'mouse' && e.button !== 0) {
-                    e.preventDefault();
-                    return;
-                }
+                // Игнорируем правую кнопку мыши и «чужие» указатели
+                if (e.pointerType === 'mouse' && e.button !== 0) return;
+                // Не реагируем на второй палец (pinch)
+                if (e.isPrimary === false) return;
                 handleCanvasClick(e);
             });
 
-            // Для старых браузеров без pointer events
-            canvas.addEventListener('click', function (e) {
-                if (!window.PointerEvent) {
+            // Fallback для очень старых браузеров без Pointer Events
+            if (!window.PointerEvent) {
+                canvas.addEventListener('click', function (e) {
                     handleCanvasClick(e);
-                }
-            });
+                });
+                canvas.addEventListener('touchstart', function (e) {
+                    // один палец — переключатель звука
+                    if (e.touches && e.touches.length > 1) return;
+                    e.preventDefault();
+                    handleCanvasClick(e);
+                }, {passive: false});
+            }
 
-            // Для touch-устройств (дополнительная страховка)
-            canvas.addEventListener('touchstart', function (e) {
-                e.preventDefault();
-                handleCanvasClick(e);
-            }, {passive: false});
-
-            // Блокируем контекстное меню
+            // Блокируем контекстное меню на канвасе
             canvas.addEventListener('contextmenu', function (e) {
                 e.preventDefault();
                 return false;
@@ -881,23 +944,19 @@
                 setTimeout(draw, 100);
             });
 
-            // === ИНИЦИАЛИЗАЦИЯ ПРИ ПЕРВОМ КАСАНИИ (глобально) ===
-            // Это гарантирует, что аудиоконтекст будет создан при первом взаимодействии
-            document.addEventListener('pointerdown', function initAudioOnce() {
-                if (!audioInitialized) {
-                    console.log('First interaction — initializing audio');
-                    initAudio();
-                }
-                // Не удаляем обработчик, чтобы он срабатывал каждый раз
-            });
-
-            // Для старых браузеров
-            document.addEventListener('touchstart', function initAudioOnceTouch() {
-                if (!audioInitialized) {
-                    console.log('First touch — initializing audio');
-                    initAudio();
-                }
-            }, {passive: true});
+            // Ранняя «разблокировка» AudioContext при любом первом жесте на странице
+            // (не запускает звук, только создаёт/возобновляет контекст)
+            function unlockAudioOnce() {
+                ensureAudioRunning().then(function () {
+                    console.log('Audio unlocked by first interaction');
+                }).catch(function () { });
+                document.removeEventListener('pointerdown', unlockAudioOnce);
+                document.removeEventListener('touchstart', unlockAudioOnce);
+                document.removeEventListener('click', unlockAudioOnce);
+            }
+            document.addEventListener('pointerdown', unlockAudioOnce, {once: true, passive: true});
+            document.addEventListener('touchstart', unlockAudioOnce, {once: true, passive: true});
+            document.addEventListener('click', unlockAudioOnce, {once: true, passive: true});
 
             // ===== PINCH-TO-ZOOM =====
             let lastTouchDist = 0;
