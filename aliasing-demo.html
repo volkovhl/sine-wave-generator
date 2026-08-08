@@ -36,7 +36,6 @@
             align-items: center;
             min-height: 100vh;
             touch-action: pan-y;
-            /* разрешаем вертикальный скролл */
         }
 
         .container {
@@ -76,7 +75,6 @@
             position: relative;
             width: 100%;
             touch-action: none;
-            /* отключаем системные жесты для canvas */
         }
 
         canvas {
@@ -90,6 +88,9 @@
             cursor: pointer;
             touch-action: none;
             touch-action: pinch-zoom;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
         }
 
         .controls {
@@ -404,7 +405,6 @@
             <canvas id="canvas"></canvas>
         </div>
 
-        <!-- Управление масштабом (периоды) -->
         <div class="zoom-controls">
             <button class="btn-zoom" id="zoomOutBtn" title="Показать больше периодов">➖ <span
                     class="label">периоды</span></button>
@@ -467,7 +467,7 @@
         </div>
         <div class="audio-hint">
             <span class="icon">🎵</span>
-            Нажмите на график — включится звук!
+            Нажмите на график — включится звук (переключатель)!
             <span style="color:#e63946;">Красные точки</span> = сэмплы,
             <span style="color:#f9c74f;">жёлтая линия</span> = то, что вы услышите
         </div>
@@ -491,7 +491,6 @@
             const formulaSample = document.getElementById('formulaSample');
             const formulaResult = document.getElementById('formulaResult');
 
-            // Кнопки +/-
             const freqDec = document.getElementById('freqDec');
             const freqInc = document.getElementById('freqInc');
             const sampleDec = document.getElementById('sampleDec');
@@ -499,12 +498,10 @@
             const bitDec = document.getElementById('bitDec');
             const bitInc = document.getElementById('bitInc');
 
-            // Зум
             const zoomOutBtn = document.getElementById('zoomOutBtn');
             const zoomInBtn = document.getElementById('zoomInBtn');
             const resetZoomBtn = document.getElementById('resetZoomBtn');
 
-            // --- состояние ---
             let audioCtx = null;
             let isPlaying = false;
             let oscillator = null;
@@ -512,7 +509,6 @@
             let playTimeout = null;
             let audioInitialized = false;
 
-            // Масштаб: количество отображаемых периодов (базовое 3)
             let displayPeriods = 3;
             const MIN_PERIODS = 0.8;
             const MAX_PERIODS = 12;
@@ -568,12 +564,10 @@
                 const centerY = margin.top + plotH / 2;
                 const amplitude = plotH / 2 * 0.8;
 
-                // Количество периодов для отображения
                 const periods = Math.max(MIN_PERIODS, Math.min(displayPeriods, MAX_PERIODS));
                 const totalPoints = Math.max(20, Math.floor(periods * sampleRate / freq));
                 const stepX = plotW / totalPoints;
 
-                // Исходный сигнал
                 ctx.beginPath();
                 ctx.strokeStyle = '#4a9a6a';
                 ctx.lineWidth = 2;
@@ -588,7 +582,6 @@
                 ctx.stroke();
                 ctx.globalAlpha = 1;
 
-                // Квантование (горизонтальные линии)
                 const levels = Math.pow(2, bits);
                 ctx.strokeStyle = '#6a5a7a';
                 ctx.lineWidth = 0.5;
@@ -602,7 +595,6 @@
                 }
                 ctx.globalAlpha = 1;
 
-                // Сэмплы
                 const sampleStep = Math.max(1, Math.floor(sampleRate / freq / 2));
                 const sampleCount = Math.min(Math.floor(totalPoints / sampleStep), 120);
 
@@ -627,7 +619,6 @@
                 }
                 ctx.shadowBlur = 0;
 
-                // Восстановленный сигнал (линейная интерполяция)
                 if (sampleX.length > 1) {
                     ctx.beginPath();
                     ctx.strokeStyle = '#f9c74f';
@@ -653,7 +644,6 @@
                     ctx.setLineDash([]);
                     ctx.globalAlpha = 1;
 
-                    // Тексты внутри графика
                     ctx.fillStyle = '#f9c74f';
                     ctx.font = `${Math.max(12, w / 42)}px monospace`;
                     ctx.textAlign = 'right';
@@ -694,7 +684,6 @@
                 }
             }
 
-            // ---- ЗВУК ----
             function initAudio() {
                 if (audioInitialized) return;
                 try {
@@ -705,7 +694,7 @@
                 }
             }
 
-            function playSound() {
+            function toggleSound() {
                 if (!audioInitialized) {
                     initAudio();
                 }
@@ -724,6 +713,7 @@
                     playFreq = 440;
                 }
 
+                // Если уже играет — выключаем
                 if (isPlaying) {
                     try {
                         if (oscillator) {
@@ -746,6 +736,7 @@
                     return;
                 }
 
+                // Включаем
                 try {
                     oscillator = audioCtx.createOscillator();
                     gainNode = audioCtx.createGain();
@@ -786,7 +777,6 @@
                 }
             }
 
-            // ---- ОБНОВЛЕНИЕ ----
             function updateAndDraw() {
                 draw();
                 if (isPlaying) {
@@ -802,7 +792,6 @@
                 }
             }
 
-            // ---- СЛАЙДЕРЫ + КНОПКИ ----
             function stepSlider(slider, delta, min, max, step) {
                 let val = parseFloat(slider.value) + delta;
                 val = Math.max(min, Math.min(max, val));
@@ -822,10 +811,8 @@
             bitDec.addEventListener('click', () => stepSlider(bitSlider, -1, 1, 16, 1));
             bitInc.addEventListener('click', () => stepSlider(bitSlider, 1, 1, 16, 1));
 
-            // ---- ЗУМ ----
             function changeZoom(delta) {
                 displayPeriods = Math.max(MIN_PERIODS, Math.min(MAX_PERIODS, displayPeriods + delta));
-                // округлим для красоты
                 displayPeriods = Math.round(displayPeriods * 10) / 10;
                 draw();
             }
@@ -837,26 +824,48 @@
                 draw();
             });
 
-            // ---- СОБЫТИЯ ДЛЯ ЗВУКА ----
-            canvas.addEventListener('pointerdown', function (e) {
-                e.preventDefault();
-                if (!audioInitialized) initAudio();
-                playSound();
-            });
+            // ===== ОБРАБОТКА СОБЫТИЙ МЫШИ =====
+            // Левая кнопка — переключатель (как на смартфоне)
             canvas.addEventListener('click', function (e) {
                 e.preventDefault();
                 if (!audioInitialized) initAudio();
-                playSound();
+                toggleSound();
             });
 
-            // ---- РАЗМЕР ----
+            // Правую кнопку блокируем полностью (контекстное меню не появляется)
+            canvas.addEventListener('contextmenu', function (e) {
+                e.preventDefault();
+                return false;
+            });
+
+            // ===== ОБРАБОТКА КАСАНИЙ (смартфоны) =====
+            canvas.addEventListener('pointerdown', function (e) {
+                // Если это не левая кнопка мыши (например, правая) — игнорируем
+                if (e.pointerType === 'mouse' && e.button !== 0) return;
+                // Для касаний (pointerType !== 'mouse') срабатывает как переключатель
+                if (e.pointerType !== 'mouse') {
+                    e.preventDefault();
+                    if (!audioInitialized) initAudio();
+                    toggleSound();
+                }
+            });
+
+            // Отключаем поведение "зажал-отпустил" для левой кнопки мыши
+            // Для этого не используем pointerdown с button===0, только click
+
+            // Дополнительно: для совместимости со старыми браузерами
+            canvas.addEventListener('touchstart', function (e) {
+                e.preventDefault();
+                if (!audioInitialized) initAudio();
+                toggleSound();
+            }, {passive: false});
+
             let resizeTimeout;
             window.addEventListener('resize', function () {
                 clearTimeout(resizeTimeout);
                 resizeTimeout = setTimeout(draw, 100);
             });
 
-            // ---- ИНИЦИАЛИЗАЦИЯ ----
             setTimeout(draw, 50);
             window.addEventListener('load', function () {
                 setTimeout(draw, 100);
@@ -866,12 +875,8 @@
                 if (!audioInitialized) initAudio();
                 document.removeEventListener('pointerdown', initAudioOnce);
             }, {once: true});
-            document.addEventListener('click', function initAudioOnceClick() {
-                if (!audioInitialized) initAudio();
-                document.removeEventListener('click', initAudioOnceClick);
-            }, {once: true});
 
-            // ---- ДОПОЛНИТЕЛЬНО: жесты на canvas (pinch) ----
+            // ===== PINCH-TO-ZOOM =====
             let lastTouchDist = 0;
             canvas.addEventListener('touchstart', function (e) {
                 if (e.touches.length === 2) {
