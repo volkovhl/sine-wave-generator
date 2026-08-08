@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
     <meta name="description"
-        content="Генератор синуса 0–20000 Гц с точным вводом частоты и длительности WAV. Выбор шкалы: логарифмическая (A) или линейная (B).">
+        content="Генератор синуса 0–20000 Гц. PCM WAV 96/192/384 кГц 16/24/32 бит + MP3 64/128/256/320 кбит/с.">
     <meta name="author" content="Pavel Volkov / volkovhl.github.io">
     <title>Генератор синуса 0–20000 Гц — логарифмическая и линейная шкала</title>
     <link rel="icon"
@@ -375,6 +375,116 @@
             transform: scale(0.94);
         }
 
+        /* ===== Панель выбора формата ===== */
+        #wavPanel {
+            position: fixed;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #121820;
+            border-top: 1px solid #2a4b62;
+            padding: 14px 12px 20px;
+            z-index: 100;
+            transform: translateY(100%);
+            transition: transform 0.28s ease;
+            box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.55);
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        #wavPanel.open {
+            transform: translateY(0);
+        }
+
+        .wav-panel-inner {
+            max-width: 420px;
+            margin: 0 auto;
+        }
+
+        .wav-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 11px;
+        }
+
+        .wav-row label {
+            font-size: 13px;
+            color: #8899aa;
+            min-width: 48px;
+            flex-shrink: 0;
+        }
+
+        .wav-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            flex: 1;
+        }
+
+        .wav-chip {
+            background: #1a2a3a;
+            border: 1.5px solid #3a5a7a;
+            color: #aabbcc;
+            font-size: 13px;
+            font-weight: 600;
+            padding: 7px 11px;
+            border-radius: 20px;
+            cursor: pointer;
+            touch-action: manipulation;
+            font-family: inherit;
+            transition: all 0.15s;
+        }
+
+        .wav-chip.active {
+            background: #2a4a6a;
+            border-color: #8ecae6;
+            color: #fff;
+            box-shadow: 0 0 12px rgba(100, 200, 255, 0.2);
+        }
+
+        .wav-chip:active {
+            transform: scale(0.95);
+        }
+
+        .wav-chip.hidden {
+            display: none;
+        }
+
+        .wav-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 6px;
+        }
+
+        .wav-actions button {
+            flex: 1;
+            padding: 11px 14px;
+            border-radius: 50px;
+            font-size: 15px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            touch-action: manipulation;
+            font-family: inherit;
+        }
+
+        #wavDownloadConfirm {
+            background: #2a6a4a;
+            color: #fff;
+            border: 1px solid #4a9a6a;
+        }
+
+        #wavDownloadConfirm:active {
+            transform: scale(0.96);
+        }
+
+        #wavPanelClose {
+            background: #2a3a4a;
+            color: #aabbcc;
+            border: 1px solid #4a5a6a;
+        }
+
         #hint {
             font-size: clamp(11px, 2.5vw, 13px);
             color: #556677;
@@ -404,6 +514,29 @@
 
         .footer-links a:hover {
             text-decoration: underline;
+        }
+
+        /* Подсказка для MP3 */
+        .mp3-hint {
+            display: none;
+            background: #1a2a3a;
+            border: 1px solid #4a6a8a;
+            border-radius: 8px;
+            padding: 8px 12px;
+            margin-top: 6px;
+            font-size: 11px;
+            color: #8899aa;
+            text-align: center;
+            line-height: 1.4;
+        }
+
+        .mp3-hint.show {
+            display: block;
+        }
+
+        .mp3-hint .icon {
+            display: inline-block;
+            margin-right: 4px;
         }
 
         @media (max-height: 600px) {
@@ -625,14 +758,65 @@
                 <input type="number" id="durationInput" min="0.1" max="1000" step="0.1" value="60">
                 <span>с</span>
             </div>
-            <button id="downloadBtn">⬇ WAV</button>
+            <button id="downloadBtn">⬇ Файл</button>
         </div>
         <div id="hint">тяните вверх‑вниз или введите частоту</div>
     </div>
+
+    <!-- Панель выбора формата -->
+    <div id="wavPanel">
+        <div class="wav-panel-inner">
+            <div class="wav-row">
+                <label>формат</label>
+                <div class="wav-chips" id="formatChips">
+                    <button class="wav-chip active" data-format="pcm">PCM</button>
+                    <button class="wav-chip" data-format="mp3">MP3</button>
+                </div>
+            </div>
+            <div class="wav-row" id="rateRow">
+                <label>кГц</label>
+                <div class="wav-chips" id="rateChips">
+                    <button class="wav-chip active" data-rate="96000">96</button>
+                    <button class="wav-chip" data-rate="192000">192</button>
+                    <button class="wav-chip" data-rate="384000">384</button>
+                </div>
+            </div>
+            <div class="wav-row" id="bitRow">
+                <label>бит</label>
+                <div class="wav-chips" id="bitChips">
+                    <button class="wav-chip active" data-bits="16">16</button>
+                    <button class="wav-chip" data-bits="24">24</button>
+                    <button class="wav-chip" data-bits="32">32</button>
+                </div>
+            </div>
+            <div class="wav-row" id="mp3Row" style="display:none;">
+                <label>кбит/с</label>
+                <div class="wav-chips" id="mp3Chips">
+                    <button class="wav-chip" data-mp3="64">64</button>
+                    <button class="wav-chip active" data-mp3="128">128</button>
+                    <button class="wav-chip" data-mp3="256">256</button>
+                    <button class="wav-chip" data-mp3="320">320</button>
+                </div>
+            </div>
+            <!-- Подсказка для MP3 -->
+            <div class="mp3-hint" id="mp3Hint">
+                <span class="icon">🌐</span> Для кодирования MP3 требуется интернет — библиотека загружается с CDN
+            </div>
+            <div class="wav-actions">
+                <button id="wavPanelClose">Закрыть</button>
+                <button id="wavDownloadConfirm">⬇ Скачать</button>
+            </div>
+        </div>
+    </div>
+
     <div class="footer-links">
         <a href="https://volkovhl.github.io/" target="_blank">volkovhl.github.io</a> |
         <a href="https://www.youtube.com/@Pavel_Volkov" target="_blank">Дела Техники</a>
     </div>
+
+    <!-- Подключаем lamejs для MP3 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lamejs/1.2.1/lame.min.js"></script>
+
     <script>
         (function () {
             'use strict';
@@ -1044,48 +1228,158 @@
                 updateOscillatorFreq(clamped);
             });
 
-            // --- WAV ---
-            function downloadWav() {
+            // --- Скачивание PCM / MP3 ---
+            let selectedFormat = 'pcm';
+            let selectedRate = 96000;
+            let selectedBits = 16;
+            let selectedMp3Bitrate = 128;
+
+            const wavPanel = document.getElementById('wavPanel');
+            const wavDownloadConfirm = document.getElementById('wavDownloadConfirm');
+            const wavPanelClose = document.getElementById('wavPanelClose');
+            const rateRow = document.getElementById('rateRow');
+            const bitRow = document.getElementById('bitRow');
+            const mp3Row = document.getElementById('mp3Row');
+            const mp3Hint = document.getElementById('mp3Hint');
+
+            // Проверяем загрузку lamejs
+            let lameLoaded = false;
+            function checkLameLoaded() {
+                if (typeof lamejs !== 'undefined' && lamejs.Mp3Encoder) {
+                    lameLoaded = true;
+                    mp3Hint.textContent = '✅ MP3 готов к работе';
+                    mp3Hint.style.borderColor = '#4a9a6a';
+                    mp3Hint.style.color = '#8ecae6';
+                }
+            }
+
+            // Проверяем через секунду после загрузки страницы
+            setTimeout(checkLameLoaded, 1000);
+
+            function openWavPanel() {
+                wavPanel.classList.add('open');
+                // Показываем подсказку если выбран MP3
+                if (selectedFormat === 'mp3') {
+                    mp3Hint.classList.add('show');
+                }
+            }
+            function closeWavPanel() {
+                wavPanel.classList.remove('open');
+            }
+
+            function updatePanelVisibility() {
+                if (selectedFormat === 'pcm') {
+                    rateRow.style.display = 'flex';
+                    bitRow.style.display = 'flex';
+                    mp3Row.style.display = 'none';
+                    mp3Hint.classList.remove('show');
+                } else {
+                    rateRow.style.display = 'none';
+                    bitRow.style.display = 'none';
+                    mp3Row.style.display = 'flex';
+                    mp3Hint.classList.add('show');
+                    checkLameLoaded();
+                }
+            }
+
+            // Выбор формата
+            document.querySelectorAll('#formatChips .wav-chip').forEach(btn => {
+                btn.addEventListener('click', function () {
+                    document.querySelectorAll('#formatChips .wav-chip').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    selectedFormat = this.dataset.format;
+                    updatePanelVisibility();
+                });
+            });
+
+            // PCM rate
+            document.querySelectorAll('#rateChips .wav-chip').forEach(btn => {
+                btn.addEventListener('click', function () {
+                    document.querySelectorAll('#rateChips .wav-chip').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    selectedRate = parseInt(this.dataset.rate, 10);
+                });
+            });
+
+            // PCM bits
+            document.querySelectorAll('#bitChips .wav-chip').forEach(btn => {
+                btn.addEventListener('click', function () {
+                    document.querySelectorAll('#bitChips .wav-chip').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    selectedBits = parseInt(this.dataset.bits, 10);
+                });
+            });
+
+            // MP3 bitrate
+            document.querySelectorAll('#mp3Chips .wav-chip').forEach(btn => {
+                btn.addEventListener('click', function () {
+                    document.querySelectorAll('#mp3Chips .wav-chip').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    selectedMp3Bitrate = parseInt(this.dataset.mp3, 10);
+                });
+            });
+
+            // ===== PCM WAV =====
+            function downloadPcm(sampleRate, bits) {
                 const freq = getCurrentFreq();
                 const duration = getDuration();
-                const sampleRate = 44100;
                 const numSamples = Math.floor(sampleRate * duration);
                 const amplitude = 0.6;
+                const bytesPerSample = bits === 16 ? 2 : (bits === 24 ? 3 : 4);
 
                 if (numSamples < 1) {
                     alert('Слишком короткая длительность');
                     return;
                 }
+                if (44 + numSamples * bytesPerSample > 130 * 1024 * 1024) {
+                    alert('Файл получится слишком большим.\nУменьшите длительность.');
+                    return;
+                }
 
                 const buffer = new Float32Array(numSamples);
-
                 if (freq === 0) {
-                    for (let i = 0; i < numSamples; i++) {
-                        buffer[i] = 0;
-                    }
+                    buffer.fill(0);
                 } else {
                     for (let i = 0; i < numSamples; i++) {
-                        const t = i / sampleRate;
-                        buffer[i] = amplitude * Math.sin(2 * Math.PI * freq * t);
+                        buffer[i] = amplitude * Math.sin(2 * Math.PI * freq * (i / sampleRate));
                     }
                 }
 
                 const fadeSamples = Math.min(Math.floor(sampleRate * 0.01), Math.floor(numSamples / 10));
                 if (fadeSamples > 0 && numSamples > fadeSamples * 2) {
                     for (let i = 0; i < fadeSamples; i++) {
-                        const gain = i / fadeSamples;
-                        buffer[i] *= gain;
-                        buffer[numSamples - 1 - i] *= gain;
+                        const g = i / fadeSamples;
+                        buffer[i] *= g;
+                        buffer[numSamples - 1 - i] *= g;
                     }
                 }
 
-                const int16Buffer = new Int16Array(numSamples);
-                for (let i = 0; i < numSamples; i++) {
-                    const s = Math.max(-1, Math.min(1, buffer[i]));
-                    int16Buffer[i] = Math.floor(s * 0x7FFF);
+                let dataBuffer;
+                if (bits === 16) {
+                    dataBuffer = new Int16Array(numSamples);
+                    for (let i = 0; i < numSamples; i++) {
+                        const s = Math.max(-1, Math.min(1, buffer[i]));
+                        dataBuffer[i] = Math.round(s * 0x7FFF);
+                    }
+                } else if (bits === 24) {
+                    dataBuffer = new Uint8Array(numSamples * 3);
+                    for (let i = 0; i < numSamples; i++) {
+                        const s = Math.max(-1, Math.min(1, buffer[i]));
+                        let val = Math.round(s * 0x7FFFFF);
+                        if (val < 0) val += 0x1000000;
+                        dataBuffer[i * 3] = val & 0xFF;
+                        dataBuffer[i * 3 + 1] = (val >> 8) & 0xFF;
+                        dataBuffer[i * 3 + 2] = (val >> 16) & 0xFF;
+                    }
+                } else {
+                    dataBuffer = new Int32Array(numSamples);
+                    for (let i = 0; i < numSamples; i++) {
+                        const s = Math.max(-1, Math.min(1, buffer[i]));
+                        dataBuffer[i] = Math.round(s * 0x7FFFFFFF);
+                    }
                 }
 
-                const dataSize = int16Buffer.length * 2;
+                const dataSize = dataBuffer.byteLength;
                 const header = new ArrayBuffer(44);
                 const view = new DataView(header);
                 view.setUint32(0, 0x52494646, false);
@@ -1096,23 +1390,137 @@
                 view.setUint16(20, 1, true);
                 view.setUint16(22, 1, true);
                 view.setUint32(24, sampleRate, true);
-                view.setUint32(28, sampleRate * 2, true);
-                view.setUint16(32, 2, true);
-                view.setUint16(34, 16, true);
+                view.setUint32(28, sampleRate * bytesPerSample, true);
+                view.setUint16(32, bytesPerSample, true);
+                view.setUint16(34, bits, true);
                 view.setUint32(36, 0x64617461, false);
                 view.setUint32(40, dataSize, true);
 
-                const wavBlob = new Blob([header, int16Buffer.buffer], {type: 'audio/wav'});
-                const url = URL.createObjectURL(wavBlob);
+                const blob = new Blob([header, dataBuffer], {type: 'audio/wav'});
+                const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
                 const freqLabel = freq === 0 ? '0.0' : freq.toFixed(1);
-                const durLabel = duration.toFixed(1);
-                a.download = `sine_${freqLabel}Hz_${durLabel}s.wav`;
+                a.download = `sine_${freqLabel}Hz_${duration.toFixed(1)}s_${sampleRate / 1000}k_${bits}bit.wav`;
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);
-                setTimeout(() => URL.revokeObjectURL(url), 5000);
+                setTimeout(() => URL.revokeObjectURL(url), 8000);
+                closeWavPanel();
+            }
+
+            // ===== MP3 =====
+            function downloadMp3(bitrate) {
+                // Проверяем наличие lamejs
+                if (typeof lamejs === 'undefined' || !lamejs.Mp3Encoder) {
+                    alert('❌ Библиотека MP3 не загружена.\nПроверьте интернет-соединение и обновите страницу.');
+                    return;
+                }
+
+                const freq = getCurrentFreq();
+                const duration = getDuration();
+                const sampleRate = 44100;
+                const numSamples = Math.floor(sampleRate * duration);
+                const amplitude = 0.8;
+
+                if (numSamples < 1) {
+                    alert('Слишком короткая длительность');
+                    return;
+                }
+
+                // Генерируем PCM
+                const buffer = new Float32Array(numSamples);
+                if (freq === 0) {
+                    buffer.fill(0);
+                } else {
+                    for (let i = 0; i < numSamples; i++) {
+                        buffer[i] = amplitude * Math.sin(2 * Math.PI * freq * (i / sampleRate));
+                    }
+                }
+
+                // Плавное затухание
+                const fadeSamples = Math.min(Math.floor(sampleRate * 0.01), Math.floor(numSamples / 10));
+                if (fadeSamples > 0 && numSamples > fadeSamples * 2) {
+                    for (let i = 0; i < fadeSamples; i++) {
+                        const g = i / fadeSamples;
+                        buffer[i] *= g;
+                        buffer[numSamples - 1 - i] *= g;
+                    }
+                }
+
+                // Конвертируем в 16-bit
+                const pcmData = new Int16Array(numSamples);
+                for (let i = 0; i < numSamples; i++) {
+                    const s = Math.max(-1, Math.min(1, buffer[i]));
+                    pcmData[i] = Math.round(s * 0x7FFF);
+                }
+
+                try {
+                    // Кодируем в MP3 через lamejs
+                    const mp3encoder = new lamejs.Mp3Encoder(1, sampleRate, bitrate);
+                    const mp3Data = [];
+
+                    const blockSize = 1152;
+                    for (let i = 0; i < pcmData.length; i += blockSize) {
+                        const chunk = pcmData.subarray(i, Math.min(i + blockSize, pcmData.length));
+                        const mp3buf = mp3encoder.encodeBuffer(chunk);
+                        if (mp3buf.length > 0) {
+                            mp3Data.push(mp3buf);
+                        }
+                    }
+                    const mp3buf = mp3encoder.flush();
+                    if (mp3buf.length > 0) {
+                        mp3Data.push(mp3buf);
+                    }
+
+                    const blob = new Blob(mp3Data, {type: 'audio/mpeg'});
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    const freqLabel = freq === 0 ? '0.0' : freq.toFixed(1);
+                    a.download = `sine_${freqLabel}Hz_${duration.toFixed(1)}s_${bitrate}kbps.mp3`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    setTimeout(() => URL.revokeObjectURL(url), 8000);
+                    closeWavPanel();
+                } catch (e) {
+                    alert('Ошибка кодирования MP3:\n' + e.message);
+                }
+            }
+
+            function doDownload() {
+                // Если выбран MP3, проверяем загрузку библиотеки
+                if (selectedFormat === 'mp3') {
+                    if (typeof lamejs === 'undefined' || !lamejs.Mp3Encoder) {
+                        alert('🌐 Для MP3 требуется интернет.\nПожалуйста, проверьте соединение и обновите страницу.');
+                        return;
+                    }
+                }
+
+                const originalText = wavDownloadConfirm.textContent;
+                wavDownloadConfirm.textContent = '⏳ Генерация...';
+                wavDownloadConfirm.disabled = true;
+                wavDownloadConfirm.style.opacity = '0.7';
+                wavPanelClose.disabled = true;
+
+                setTimeout(function () {
+                    try {
+                        if (selectedFormat === 'pcm') {
+                            downloadPcm(selectedRate, selectedBits);
+                        } else {
+                            downloadMp3(selectedMp3Bitrate);
+                        }
+                    } catch (err) {
+                        console.error(err);
+                        alert('Ошибка генерации: ' + (err.message || err));
+                    } finally {
+                        wavDownloadConfirm.textContent = originalText;
+                        wavDownloadConfirm.disabled = false;
+                        wavDownloadConfirm.style.opacity = '1';
+                        wavPanelClose.disabled = false;
+                    }
+                }, 50);
             }
 
             // --- события кнопок шкалы ---
@@ -1133,10 +1541,25 @@
                 toggleSound();
             }, {passive: false});
 
-            downloadBtn.addEventListener('click', downloadWav);
+            downloadBtn.addEventListener('click', function (e) {
+                e.preventDefault();
+                openWavPanel();
+            });
             downloadBtn.addEventListener('touchstart', function (e) {
                 e.preventDefault();
-                downloadWav();
+                openWavPanel();
+            }, {passive: false});
+
+            wavDownloadConfirm.addEventListener('click', doDownload);
+            wavDownloadConfirm.addEventListener('touchstart', function (e) {
+                e.preventDefault();
+                doDownload();
+            }, {passive: false});
+
+            wavPanelClose.addEventListener('click', closeWavPanel);
+            wavPanelClose.addEventListener('touchstart', function (e) {
+                e.preventDefault();
+                closeWavPanel();
             }, {passive: false});
 
             slider.addEventListener('touchstart', function (e) {
