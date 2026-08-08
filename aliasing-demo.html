@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Эффект Найквиста — визуальная демонстрация алиасинга | volkovhl</title>
+    <meta name="description" content="Интерактивная демонстрация эффекта Найквиста (алиасинга). Увидьте, как 5 кГц превращается в 3 кГц при дискретизации 8 кГц. Наглядный пример теоремы Котельникова.">
+    <meta name="keywords" content="эффект Найквиста, алиасинг, теорема Котельникова, дискретизация, частота, синус, генератор, цифровой звук">
+    <meta name="author" content="Pavel Volkov / volkovhl.github.io">
+    <link rel="canonical" href="https://volkovhl.github.io/aliasing-demo.html">
+    
+    <meta property="og:title" content="Эффект Найквиста — визуальная демонстрация алиасинга">
+    <meta property="og:description" content="Интерактивная демонстрация эффекта Найквиста. Увидьте, как 5 кГц превращается в 3 кГц при дискретизации 8 кГц.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://volkovhl.github.io/aliasing-demo.html">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Эффект Найквиста — визуальная демонстрация алиасинга">
+    <meta name="twitter:description" content="Интерактивная демонстрация эффекта Найквиста. Увидьте, как 5 кГц превращается в 3 кГц при дискретизации 8 кГц.">
+    
+    <link rel="icon" href="data:image/svg+xml,&lt;svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'&gt;&lt;text y='.9em' font-size='90'&gt;🌀&lt;/text&gt;&lt;/svg&gt;">
+    
+    <style>
+        /* Все стили из демонстрации */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: #0b0e14;
+            color: #e0e0e0;
+            font-family: -apple-system, 'Segoe UI', Roboto, sans-serif;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 900px;
+            width: 100%;
+            background: #141a22;
+            border-radius: 20px;
+            padding: 24px;
+            box-shadow: 0 8px 40px rgba(0,0,0,0.7);
+        }
+        h1 {
+            font-size: 28px;
+            margin-bottom: 8px;
+            color: #8ecae6;
+            text-align: center;
+        }
+        .subtitle {
+            text-align: center;
+            color: #8899aa;
+            font-size: 18px;
+            margin-bottom: 20px;
+        }
+        .subtitle .highlight {
+            color: #f9c74f;
+            font-weight: 700;
+        }
+        .subtitle .highlight2 {
+            color: #f9844a;
+            font-weight: 700;
+        }
+        canvas {
+            width: 100%;
+            height: auto;
+            aspect-ratio: 16/5;
+            background: #0a0e14;
+            border-radius: 12px;
+            border: 1px solid #2a4b62;
+            display: block;
+            cursor: pointer;
+            touch-action: none;
+        }
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-top: 16px;
+            justify-content: center;
+            align-items: center;
+        }
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            background: #1a2230;
+            padding: 10px 16px;
+            border-radius: 12px;
+            border: 1px solid #2a4b62;
+            flex: 1;
+            min-width: 140px;
+        }
+        .control-group label {
+            font-size: 13px;
+            color: #8899aa;
+            font-weight: 500;
+        }
+        .control-group .value {
+            font-size: 20px;
+            font-weight: 700;
+            color: #8ecae6;
+        }
+        input[type="range"] {
+            width: 100%;
+            max-width: 200px;
+            -webkit-appearance: none;
+            appearance: none;
+            height: 6px;
+            border-radius: 3px;
+            background: linear-gradient(to right, #4a6fa5, #8ecae6);
+            outline: none;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #ffffff;
+            cursor: pointer;
+            box-shadow: 0 0 12px rgba(100,200,255,0.4);
+        }
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #ffffff;
+            cursor: pointer;
+        }
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-top: 12px;
+            justify-content: center;
+            font-size: 14px;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .legend-item .line {
+            width: 30px;
+            height: 3px;
+            border-radius: 2px;
+        }
+        .legend-item .line.original {
+            background: #4a9a6a;
+        }
+        .legend-item .line.samples {
+            background: #e63946;
+        }
+        .legend-item .line.reconstructed {
+            background: #f9c74f;
+            border-top: 2px dashed #f9c74f;
+            height: 0;
+        }
+        .legend-item .line.quantized {
+            background: #6a5a7a;
+            opacity: 0.5;
+        }
+        .formula {
+            background: #0a0e14;
+            border-radius: 10px;
+            padding: 12px 16px;
+            margin-top: 12px;
+            font-family: 'Courier New', monospace;
+            font-size: 15px;
+            text-align: center;
+            border: 1px solid #2a4b62;
+            color: #aabbcc;
+        }
+        .formula .highlight {
+            color: #f9c74f;
+            font-weight: 700;
+        }
+        .formula .highlight2 {
+            color: #e63946;
+            font-weight: 700;
+        }
+        .formula .result {
+            color: #4a9a6a;
+            font-weight: 700;
+            font-size: 18px;
+        }
+        .audio-hint {
+            margin-top: 12px;
+            text-align: center;
+            color: #556677;
+            font-size: 14px;
+        }
+        .audio-hint .icon {
+            font-size: 20px;
+        }
+        
+        /* Кнопка "Назад" */
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: #8ecae6;
+            text-decoration: none;
+            font-weight: 600;
+            margin-bottom: 16px;
+            padding: 8px 16px;
+            border: 1px solid #2a4b62;
+            border-radius: 30px;
+            transition: all 0.2s;
+        }
+        .back-link:hover {
+            background: #1a2a3a;
+            border-color: #4a6a8a;
+        }
+        
+        /* Футер с ссылками */
+        .footer-links {
+            text-align: center;
+            font-size: clamp(12px, 2.8vw, 14px);
+            border-top: 1px solid #2a4b62;
+            padding: 12px 0 4px 0;
+            width: 100%;
+            max-width: 900px;
+            margin: 16px auto 0;
+            background: #0b0e14;
+        }
+        .footer-links a {
+            color: #7a5a3a;
+            text-decoration: none;
+            margin: 0 8px;
+        }
+        .footer-links a:hover {
+            text-decoration: underline;
+        }
+        
+        @media (max-width: 600px) {
+            .container { padding: 12px; }
+            h1 { font-size: 20px; }
+            .subtitle { font-size: 14px; }
+            .control-group { padding: 6px 10px; min-width: 100px; }
+            .control-group .value { font-size: 16px; }
+            .formula { font-size: 12px; padding: 8px 10px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="index.html" class="back-link">⬅ Назад к генератору</a>
+        
+        <h1>🌀 Эффект Найквиста: Алиасинг</h1>
+        <div class="subtitle">
+            <span class="highlight">5 кГц</span> при дискретизации 
+            <span class="highlight2">8 кГц</span> → слышно как 
+            <span class="highlight">3 кГц</span>!
+        </div>
+
+        <canvas id="canvas"></canvas>
+
+        <div class="controls">
+            <div class="control-group">
+                <label>Частота сигнала</label>
+                <div class="value" id="freqDisplay">5000 Гц</div>
+                <input type="range" id="freqSlider" min="500" max="12000" value="5000" step="100">
+            </div>
+            <div class="control-group">
+                <label>Частота дискретизации</label>
+                <div class="value" id="sampleDisplay">8000 Гц</div>
+                <input type="range" id="sampleSlider" min="1000" max="48000" value="8000" step="100">
+            </div>
+            <div class="control-group">
+                <label>Битность</label>
+                <div class="value" id="bitDisplay">8 бит</div>
+                <input type="range" id="bitSlider" min="1" max="16" value="8" step="1">
+            </div>
+        </div>
+
+        <div class="formula" id="formula">
+            f<sub>ложная</sub> = |f<sub>сигнала</sub> − f<sub>дискретизации</sub> × n| = 
+            <span class="highlight" id="formulaFreq">5000</span> − 
+            <span class="highlight2" id="formulaSample">8000</span> × 1 = 
+            <span class="result" id="formulaResult">3000</span> Гц
+        </div>
+
+        <div class="legend">
+            <div class="legend-item">
+                <div class="line original"></div>
+                <span>Исходный сигнал (гладкий)</span>
+            </div>
+            <div class="legend-item">
+                <div class="line samples"></div>
+                <span>Отсчёты (сэмплы) в красном</span>
+            </div>
+            <div class="legend-item">
+                <div class="line reconstructed"></div>
+                <span>Восстановленный сигнал (алиасинг)</span>
+            </div>
+            <div class="legend-item">
+                <div class="line quantized"></div>
+                <span>Квантование (ступеньки)</span>
+            </div>
+        </div>
+
+        <div class="audio-hint">
+            <span class="icon">🎵</span> 
+            Нажмите на график — включится звук! 
+            <span style="color:#e63946;">Красные точки</span> = сэмплы, 
+            <span style="color:#f9c74f;">жёлтая линия</span> = то, что вы услышите
+        </div>
+    </div>
+
+    <div class="footer-links">
+        <a href="https://volkovhl.github.io/" target="_blank">volkovhl.github.io</a> |
+        <a href="https://www.youtube.com/@Pavel_Volkov" target="_blank">Дела Техники</a>
+    </div>
+
+    <script>
+        (function() {
+            const canvas = document.getElementById('canvas');
+            const ctx = canvas.getContext('2d');
+
+            const freqSlider = document.getElementById('freqSlider');
+            const sampleSlider = document.getElementById('sampleSlider');
+            const bitSlider = document.getElementById('bitSlider');
+            const freqDisplay = document.getElementById('freqDisplay');
+            const sampleDisplay = document.getElementById('sampleDisplay');
+            const bitDisplay = document.getElementById('bitDisplay');
+            const formulaFreq = document.getElementById('formulaFreq');
+            const formulaSample = document.getElementById('formulaSample');
+            const formulaResult = document.getElementById('formulaResult');
+
+            let audioCtx = null;
+            let isPlaying = false;
+            let oscillator = null;
+            let gainNode = null;
+            let playTimeout = null;
+
+            function getParams() {
+                return {
+                    freq: parseFloat(freqSlider.value),
+                    sampleRate: parseFloat(sampleSlider.value),
+                    bits: parseInt(bitSlider.value, 10)
+                };
+            }
+
+            function calculateAlias(freq, sampleRate) {
+                if (freq <= 0 || sampleRate <= 0) return 0;
+                const ratio = freq / sampleRate;
+                const n = Math.round(ratio);
+                if (n === 0) return freq;
+                const alias = Math.abs(freq - sampleRate * n);
+                return Math.min(alias, sampleRate / 2);
+            }
+
+            function draw() {
+                const rect = canvas.getBoundingClientRect();
+                const dpr = window.devicePixelRatio || 1;
+                const w = rect.width * dpr;
+                const h = rect.height * dpr;
+                canvas.width = w;
+                canvas.height = h;
+
+                const params = getParams();
+                const { freq, sampleRate, bits } = params;
+
+                const aliasFreq = calculateAlias(freq, sampleRate);
+
+                const ratio = freq / sampleRate;
+                const n = Math.round(ratio);
+                formulaFreq.textContent = freq.toFixed(0);
+                formulaSample.textContent = sampleRate.toFixed(0);
+                if (n === 0) {
+                    formulaResult.textContent = freq.toFixed(0) + ' Гц (нет алиасинга)';
+                } else {
+                    formulaResult.textContent = aliasFreq.toFixed(0) + ' Гц';
+                }
+
+                freqDisplay.textContent = freq.toFixed(0) + ' Гц';
+                sampleDisplay.textContent = sampleRate.toFixed(0) + ' Гц';
+                bitDisplay.textContent = bits + ' бит';
+
+                ctx.clearRect(0, 0, w, h);
+
+                const margin = { top: 30, bottom: 30, left: 40, right: 30 };
+                const plotW = w - margin.left - margin.right;
+                const plotH = h - margin.top - margin.bottom;
+                const centerY = margin.top + plotH / 2;
+                const amplitude = plotH / 2 * 0.8;
+
+                const periods = 3;
+                const totalPoints = Math.max(10, Math.floor(periods * sampleRate / freq));
+                const stepX = plotW / totalPoints;
+
+                // Исходный сигнал
+                ctx.beginPath();
+                ctx.strokeStyle = '#4a9a6a';
+                ctx.lineWidth = 2;
+                ctx.globalAlpha = 0.7;
+                for (let i = 0; i <= totalPoints; i++) {
+                    const x = margin.left + i * stepX;
+                    const t = (i / totalPoints) * periods * 2 * Math.PI;
+                    const y = centerY - amplitude * Math.sin(t);
+                    if (i === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                }
+                ctx.stroke();
+                ctx.globalAlpha = 1;
+
+                // Квантование
+                const levels = Math.pow(2, bits);
+                ctx.strokeStyle = '#6a5a7a';
+                ctx.lineWidth = 0.5;
+                ctx.globalAlpha = 0.2;
+                for (let lv = 0; lv <= levels; lv++) {
+                    const yPos = margin.top + lv * (plotH / levels);
+                    ctx.beginPath();
+                    ctx.moveTo(margin.left, yPos);
+                    ctx.lineTo(margin.left + plotW, yPos);
+                    ctx.stroke();
+                }
+                ctx.globalAlpha = 1;
+
+                // Сэмплы
+                const sampleStep = Math.max(1, Math.floor(sampleRate / freq / 2));
+                const sampleCount = Math.min(Math.floor(totalPoints / sampleStep), 80);
+
+                ctx.fillStyle = '#e63946';
+                ctx.shadowColor = '#e63946';
+                ctx.shadowBlur = 8;
+
+                const sampleX = [];
+                const sampleY = [];
+
+                for (let i = 0; i < sampleCount && i * sampleStep <= totalPoints; i++) {
+                    const idx = i * sampleStep;
+                    const x = margin.left + idx * stepX;
+                    const t = (idx / totalPoints) * periods * 2 * Math.PI;
+                    const y = centerY - amplitude * Math.sin(t);
+                    sampleX.push(x);
+                    sampleY.push(y);
+
+                    ctx.beginPath();
+                    ctx.arc(x, y, Math.max(4, w / 120), 0, 2 * Math.PI);
+                    ctx.fill();
+                }
+                ctx.shadowBlur = 0;
+
+                // Восстановленный сигнал
+                if (sampleX.length > 1) {
+                    ctx.beginPath();
+                    ctx.strokeStyle = '#f9c74f';
+                    ctx.lineWidth = 2.5;
+                    ctx.setLineDash([6, 6]);
+                    ctx.globalAlpha = 0.9;
+
+                    for (let i = 0; i < sampleX.length - 1; i++) {
+                        const x0 = sampleX[i];
+                        const y0 = sampleY[i];
+                        const x1 = sampleX[i + 1];
+                        const y1 = sampleY[i + 1];
+
+                        const steps = 10;
+                        for (let j = 0; j <= steps; j++) {
+                            const t = j / steps;
+                            const x = x0 + (x1 - x0) * t;
+                            const y = y0 + (y1 - y0) * t;
+                            if (i === 0 && j === 0) ctx.moveTo(x, y);
+                            else ctx.lineTo(x, y);
+                        }
+                    }
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+                    ctx.globalAlpha = 1;
+
+                    ctx.fillStyle = '#f9c74f';
+                    ctx.font = `${Math.max(14, w / 40)}px monospace`;
+                    ctx.textAlign = 'right';
+                    ctx.textBaseline = 'top';
+                    ctx.fillText(`Алиасинг: ${aliasFreq.toFixed(0)} Гц`, margin.left + plotW - 10, margin.top + 10);
+
+                    ctx.fillStyle = '#4a9a6a';
+                    ctx.textAlign = 'left';
+                    ctx.textBaseline = 'bottom';
+                    ctx.fillText(`Исходный: ${freq.toFixed(0)} Гц`, margin.left + 10, margin.top + plotH);
+
+                    ctx.fillStyle = '#e63946';
+                    ctx.textAlign = 'left';
+                    ctx.textBaseline = 'top';
+                    ctx.fillText(`Дискретизация: ${sampleRate.toFixed(0)} Гц`, margin.left + 10, margin.top + 10);
+
+                    ctx.fillStyle = '#8899aa';
+                    ctx.textAlign = 'right';
+                    ctx.textBaseline = 'bottom';
+                    ctx.fillText(`${(sampleRate / freq).toFixed(2)} сэмплов/период`, margin.left + plotW - 10, margin.top + plotH);
+
+                    if (aliasFreq !== freq && aliasFreq > 0) {
+                        ctx.fillStyle = '#f9844a';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.font = `bold ${Math.max(18, w/30)}px monospace`;
+                        ctx.fillText(`⚠️ ${freq.toFixed(0)} Гц → ${aliasFreq.toFixed(0)} Гц`, 
+                            margin.left + plotW/2, margin.top + plotH + 30);
+                    } else if (sampleRate / freq >= 2) {
+                        ctx.fillStyle = '#4a9a6a';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.font = `bold ${Math.max(16, w/35)}px monospace`;
+                        ctx.fillText(`✅ Нет алиасинга (${(sampleRate/freq).toFixed(1)}×)`, 
+                            margin.left + plotW/2, margin.top + plotH + 30);
+                    }
+                }
+            }
+
+            // --- Звук ---
+            function playSound() {
+                const params = getParams();
+                const aliasFreq = calculateAlias(params.freq, params.sampleRate);
+                const playFreq = aliasFreq > 0 && aliasFreq < 20000 ? aliasFreq : 440;
+
+                if (!audioCtx) {
+                    try {
+                        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    } catch (e) {
+                        alert('Аудио не поддерживается');
+                        return;
+                    }
+                }
+
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+
+                if (isPlaying) {
+                    try {
+                        if (oscillator) {
+                            oscillator.stop(0);
+                            oscillator.disconnect();
+                            oscillator = null;
+                        }
+                        if (gainNode) {
+                            gainNode.disconnect();
+                            gainNode = null;
+                        }
+                        if (playTimeout) {
+                            clearTimeout(playTimeout);
+                            playTimeout = null;
+                        }
+                    } catch (e) {}
+                    isPlaying = false;
+                    canvas.style.borderColor = '#2a4b62';
+                    return;
+                }
+
+                try {
+                    oscillator = audioCtx.createOscillator();
+                    gainNode = audioCtx.createGain();
+                    oscillator.type = 'sine';
+                    oscillator.frequency.value = playFreq;
+                    gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioCtx.destination);
+                    oscillator.start(0);
+                    isPlaying = true;
+                    canvas.style.borderColor = '#f9c74f';
+                    canvas.style.borderWidth = '3px';
+
+                    oscillator.onended = function() {
+                        isPlaying = false;
+                        canvas.style.borderColor = '#2a4b62';
+                        canvas.style.borderWidth = '1px';
+                    };
+
+                    if (playTimeout) clearTimeout(playTimeout);
+                    playTimeout = setTimeout(() => {
+                        if (isPlaying) {
+                            try {
+                                oscillator.stop(0);
+                                oscillator.disconnect();
+                                gainNode.disconnect();
+                            } catch (e) {}
+                            isPlaying = false;
+                            canvas.style.borderColor = '#2a4b62';
+                            canvas.style.borderWidth = '1px';
+                        }
+                        playTimeout = null;
+                    }, 5000);
+
+                } catch (e) {
+                    alert('Ошибка звука: ' + e.message);
+                }
+            }
+
+            // --- События ---
+            function updateAndDraw() {
+                draw();
+                if (isPlaying) {
+                    const params = getParams();
+                    const aliasFreq = calculateAlias(params.freq, params.sampleRate);
+                    const playFreq = aliasFreq > 0 && aliasFreq < 20000 ? aliasFreq : 440;
+                    if (oscillator) {
+                        try {
+                            oscillator.frequency.setTargetAtTime(playFreq, audioCtx.currentTime, 0.01);
+                        } catch (e) {}
+                    }
+                }
+            }
+
+            freqSlider.addEventListener('input', updateAndDraw);
+            sampleSlider.addEventListener('input', updateAndDraw);
+            bitSlider.addEventListener('input', updateAndDraw);
+
+            canvas.addEventListener('click', function(e) {
+                e.preventDefault();
+                playSound();
+            });
+            canvas.addEventListener('touchstart', function(e) {
+                e.preventDefault();
+                playSound();
+            }, { passive: false });
+
+            let resizeTimeout;
+            window.addEventListener('resize', function() {
+                clearTimeout(resizeTimeout);
+                resizeTimeout = setTimeout(draw, 100);
+            });
+
+            setTimeout(draw, 50);
+            window.addEventListener('load', function() {
+                setTimeout(draw, 100);
+            });
+
+            document.addEventListener('click', function initAudio() {
+                if (!audioCtx) {
+                    try {
+                        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    } catch (e) {}
+                }
+                document.removeEventListener('click', initAudio);
+            }, { once: true });
+
+            document.addEventListener('touchstart', function initAudioTouch() {
+                if (!audioCtx) {
+                    try {
+                        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    } catch (e) {}
+                }
+                document.removeEventListener('touchstart', initAudioTouch);
+            }, { once: true });
+
+        })();
+    </script>
+</body>
+</html>
