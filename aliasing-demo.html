@@ -14,8 +14,6 @@
     <meta property="og:title" content="Эффект Найквиста — визуальная демонстрация алиасинга" />
     <meta property="og:description"
         content="Интерактивная демонстрация эффекта Найквиста. Увидьте, как 5 кГц превращается в 3 кГц при дискретизации 8 кГц." />
-    <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://volkovhl.github.io/aliasing-demo.html" />
     <meta name="twitter:card" content="summary_large_image" />
     <link rel="icon"
         href="data:image/svg+xml,&lt;svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'&gt;&lt;text y='.9em' font-size='90'&gt;🌀&lt;/text&gt;&lt;/svg&gt;" />
@@ -713,7 +711,6 @@
                     playFreq = 440;
                 }
 
-                // Если уже играет — выключаем
                 if (isPlaying) {
                     try {
                         if (oscillator) {
@@ -736,7 +733,6 @@
                     return;
                 }
 
-                // Включаем
                 try {
                     oscillator = audioCtx.createOscillator();
                     gainNode = audioCtx.createGain();
@@ -824,36 +820,39 @@
                 draw();
             });
 
-            // ===== ОБРАБОТКА СОБЫТИЙ МЫШИ =====
-            // Левая кнопка — переключатель (как на смартфоне)
-            canvas.addEventListener('click', function (e) {
+            // ===== ЕДИНЫЙ ОБРАБОТЧИК ДЛЯ ВСЕХ УСТРОЙСТВ =====
+            // Используем pointerdown + проверку на левую кнопку мыши
+            canvas.addEventListener('pointerdown', function (e) {
+                // Для мыши: срабатываем только на левую кнопку (button === 0)
+                // Для касаний: pointerType !== 'mouse' — всегда срабатываем
+                if (e.pointerType === 'mouse' && e.button !== 0) {
+                    // Правая кнопка — блокируем
+                    e.preventDefault();
+                    return;
+                }
                 e.preventDefault();
                 if (!audioInitialized) initAudio();
                 toggleSound();
             });
 
-            // Правую кнопку блокируем полностью (контекстное меню не появляется)
+            // Блокируем контекстное меню (правая кнопка)
             canvas.addEventListener('contextmenu', function (e) {
                 e.preventDefault();
                 return false;
             });
 
-            // ===== ОБРАБОТКА КАСАНИЙ (смартфоны) =====
-            canvas.addEventListener('pointerdown', function (e) {
-                // Если это не левая кнопка мыши (например, правая) — игнорируем
-                if (e.pointerType === 'mouse' && e.button !== 0) return;
-                // Для касаний (pointerType !== 'mouse') срабатывает как переключатель
-                if (e.pointerType !== 'mouse') {
+            // Дополнительная защита: если pointerdown не сработал (старые браузеры)
+            canvas.addEventListener('click', function (e) {
+                // Игнорируем, если уже обработано pointerdown (чтобы не было двойного срабатывания)
+                // Но для старых браузеров без pointerdown — сработает
+                if (!window.PointerEvent) {
                     e.preventDefault();
                     if (!audioInitialized) initAudio();
                     toggleSound();
                 }
             });
 
-            // Отключаем поведение "зажал-отпустил" для левой кнопки мыши
-            // Для этого не используем pointerdown с button===0, только click
-
-            // Дополнительно: для совместимости со старыми браузерами
+            // Для touch-устройств (запасной вариант)
             canvas.addEventListener('touchstart', function (e) {
                 e.preventDefault();
                 if (!audioInitialized) initAudio();
@@ -871,6 +870,7 @@
                 setTimeout(draw, 100);
             });
 
+            // Инициализация аудио при первом касании
             document.addEventListener('pointerdown', function initAudioOnce() {
                 if (!audioInitialized) initAudio();
                 document.removeEventListener('pointerdown', initAudioOnce);
