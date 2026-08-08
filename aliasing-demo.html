@@ -85,7 +85,6 @@
             display: block;
             cursor: pointer;
             touch-action: none;
-            touch-action: pinch-zoom;
             -webkit-touch-callout: none;
             -webkit-user-select: none;
             user-select: none;
@@ -682,24 +681,34 @@
                 }
             }
 
+            // === ИСПРАВЛЕННАЯ ФУНКЦИЯ ИНИЦИАЛИЗАЦИИ АУДИО ===
             function initAudio() {
                 if (audioInitialized) return;
                 try {
                     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    // ВАЖНО: возобновляем контекст, если он приостановлен
+                    if (audioCtx.state === 'suspended') {
+                        audioCtx.resume();
+                    }
                     audioInitialized = true;
+                    console.log('Audio initialized, state:', audioCtx.state);
                 } catch (e) {
-                    console.warn('Audio not supported');
+                    console.warn('Audio not supported:', e);
                 }
             }
 
             function toggleSound() {
+                // Сначала инициализируем аудио
                 if (!audioInitialized) {
                     initAudio();
                 }
+
                 if (!audioCtx) {
                     alert('Аудио не поддерживается в этом браузере');
                     return;
                 }
+
+                // ВАЖНО: всегда возобновляем контекст перед использованием
                 if (audioCtx.state === 'suspended') {
                     audioCtx.resume();
                 }
@@ -712,6 +721,7 @@
                 }
 
                 if (isPlaying) {
+                    // Останавливаем звук
                     try {
                         if (oscillator) {
                             oscillator.stop(0);
@@ -730,9 +740,11 @@
                     isPlaying = false;
                     canvas.style.borderColor = '#2a4b62';
                     canvas.style.borderWidth = '1px';
+                    console.log('Sound stopped');
                     return;
                 }
 
+                // Запускаем звук
                 try {
                     oscillator = audioCtx.createOscillator();
                     gainNode = audioCtx.createGain();
@@ -745,6 +757,7 @@
                     isPlaying = true;
                     canvas.style.borderColor = '#f9c74f';
                     canvas.style.borderWidth = '3px';
+                    console.log('Sound started, frequency:', playFreq);
 
                     oscillator.onended = function () {
                         isPlaying = false;
@@ -820,44 +833,42 @@
                 draw();
             });
 
-            // ===== ЕДИНЫЙ ОБРАБОТЧИК ДЛЯ ВСЕХ УСТРОЙСТВ =====
-            // Используем pointerdown + проверку на левую кнопку мыши
+            // === ИСПРАВЛЕННЫЙ ОБРАБОТЧИК ДЛЯ КАНВАСА ===
+            function handleCanvasClick(e) {
+                e.preventDefault();
+                console.log('Canvas clicked/touched');
+                initAudio(); // Инициализируем аудио при клике
+                toggleSound();
+            }
+
+            // Универсальный обработчик для всех типов ввода
             canvas.addEventListener('pointerdown', function (e) {
-                // Для мыши: срабатываем только на левую кнопку (button === 0)
-                // Для касаний: pointerType !== 'mouse' — всегда срабатываем
+                // Для мыши — только левая кнопка
                 if (e.pointerType === 'mouse' && e.button !== 0) {
-                    // Правая кнопка — блокируем
                     e.preventDefault();
                     return;
                 }
-                e.preventDefault();
-                if (!audioInitialized) initAudio();
-                toggleSound();
+                handleCanvasClick(e);
             });
 
-            // Блокируем контекстное меню (правая кнопка)
+            // Для старых браузеров без pointer events
+            canvas.addEventListener('click', function (e) {
+                if (!window.PointerEvent) {
+                    handleCanvasClick(e);
+                }
+            });
+
+            // Для touch-устройств (дополнительная страховка)
+            canvas.addEventListener('touchstart', function (e) {
+                e.preventDefault();
+                handleCanvasClick(e);
+            }, {passive: false});
+
+            // Блокируем контекстное меню
             canvas.addEventListener('contextmenu', function (e) {
                 e.preventDefault();
                 return false;
             });
-
-            // Дополнительная защита: если pointerdown не сработал (старые браузеры)
-            canvas.addEventListener('click', function (e) {
-                // Игнорируем, если уже обработано pointerdown (чтобы не было двойного срабатывания)
-                // Но для старых браузеров без pointerdown — сработает
-                if (!window.PointerEvent) {
-                    e.preventDefault();
-                    if (!audioInitialized) initAudio();
-                    toggleSound();
-                }
-            });
-
-            // Для touch-устройств (запасной вариант)
-            canvas.addEventListener('touchstart', function (e) {
-                e.preventDefault();
-                if (!audioInitialized) initAudio();
-                toggleSound();
-            }, {passive: false});
 
             let resizeTimeout;
             window.addEventListener('resize', function () {
@@ -870,11 +881,23 @@
                 setTimeout(draw, 100);
             });
 
-            // Инициализация аудио при первом касании
+            // === ИНИЦИАЛИЗАЦИЯ ПРИ ПЕРВОМ КАСАНИИ (глобально) ===
+            // Это гарантирует, что аудиоконтекст будет создан при первом взаимодействии
             document.addEventListener('pointerdown', function initAudioOnce() {
-                if (!audioInitialized) initAudio();
-                document.removeEventListener('pointerdown', initAudioOnce);
-            }, {once: true});
+                if (!audioInitialized) {
+                    console.log('First interaction — initializing audio');
+                    initAudio();
+                }
+                // Не удаляем обработчик, чтобы он срабатывал каждый раз
+            });
+
+            // Для старых браузеров
+            document.addEventListener('touchstart', function initAudioOnceTouch() {
+                if (!audioInitialized) {
+                    console.log('First touch — initializing audio');
+                    initAudio();
+                }
+            }, {passive: true});
 
             // ===== PINCH-TO-ZOOM =====
             let lastTouchDist = 0;
