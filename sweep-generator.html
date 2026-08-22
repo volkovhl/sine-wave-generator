@@ -101,6 +101,38 @@
         }
         .fine-btn:active { transform:scale(0.92); background:#d5e0eb; }
 
+        /* Стили для переключателя закона */
+        .law-switch {
+            display:flex; 
+            background:#e3eaf2; 
+            border:2px solid #b8c9da; 
+            border-radius:40px; 
+            padding:4px;
+            gap:4px;
+            flex-shrink:0;
+        }
+        .law-btn {
+            background:transparent; 
+            border:none; 
+            padding:8px 24px; 
+            border-radius:30px; 
+            font-size:clamp(14px,3vw,18px); 
+            font-weight:600; 
+            color:#4a607a; 
+            cursor:pointer; 
+            transition: all 0.2s ease;
+            font-family:inherit;
+            touch-action:manipulation;
+            white-space:nowrap;
+        }
+        .law-btn.active {
+            background:#ffffff; 
+            color:#0b3b5c; 
+            box-shadow:0 2px 8px rgba(0,0,0,0.08);
+            border:1px solid #c7d6e5;
+        }
+        .law-btn:active { transform:scale(0.94); }
+
         .controls-row {
             display:flex; flex-wrap:wrap; align-items:center;
             justify-content:center; gap:10px; flex-shrink:0;
@@ -172,6 +204,7 @@
             .param-block .value-input { font-size:22px; }
             #backBtn, #downloadBtn, #playBtn { padding:8px 18px; font-size:15px; }
             #playBtn { min-width:100px; }
+            .law-btn { padding:6px 16px; font-size:14px; }
         }
         @media (max-height:480px) {
             .param-block { padding:4px 8px; gap:4px; }
@@ -181,6 +214,7 @@
             .param-block label { font-size:12px; min-width:50px; }
             #backBtn, #downloadBtn, #playBtn { padding:6px 14px; font-size:13px; }
             #playBtn { min-width:80px; }
+            .law-btn { padding:4px 12px; font-size:12px; }
         }
     </style>
 </head>
@@ -225,11 +259,20 @@
         </div>
     </div>
 
+    <!-- Переключатель закона -->
+    <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; justify-content:center; flex-shrink:0;">
+        <div style="font-size:clamp(14px,3vw,18px); font-weight:600; color:#4a607a;">Закон:</div>
+        <div class="law-switch" id="lawSwitch">
+            <button class="law-btn active" data-law="linear">Линейный</button>
+            <button class="law-btn" data-law="log">Логарифмический</button>
+        </div>
+    </div>
+
     <div class="controls-row">
         <button id="playBtn">▶ Прослушать</button>
         <button id="downloadBtn">⬇ Файл</button>
     </div>
-    <div style="font-size:clamp(11px,2.5vw,13px); color:#6a7f99; letter-spacing:0.5px; flex-shrink:0; margin-top:2px;">линейный свип от старта до финиша</div>
+    <div style="font-size:clamp(11px,2.5vw,13px); color:#6a7f99; letter-spacing:0.5px; flex-shrink:0; margin-top:2px;" id="lawLabel">линейный свип от старта до финиша</div>
 </div>
 
 <!-- панель форматов -->
@@ -286,6 +329,7 @@
         let startFreq = 1000;
         let endFreq = 20000;
         let duration = 60;
+        let isLog = false; // false - линейный, true - логарифмический
         const MIN_FREQ=0, MAX_FREQ=20000;
         const MIN_DUR=0.1, MAX_DUR=1000;
 
@@ -297,12 +341,31 @@
         const endInput = document.getElementById('endInput');
         const durInput = document.getElementById('durInput');
         const playBtn = document.getElementById('playBtn');
+        const lawLabel = document.getElementById('lawLabel');
+        const lawBtns = document.querySelectorAll('#lawSwitch .law-btn');
+
+        // === обновление подписи закона ===
+        function updateLawLabel() {
+            lawLabel.textContent = isLog 
+                ? 'логарифмический свип от старта до финиша' 
+                : 'линейный свип от старта до финиша';
+        }
+
+        // === переключение закона ===
+        lawBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                lawBtns.forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                isLog = (this.dataset.law === 'log');
+                updateLawLabel();
+                // Если свип проигрывается — остановить, чтобы применить новый закон
+                if (isPlaying) stopSweep();
+            });
+        });
 
         // === ввод с клавиатуры ===
         function showInput(input, displaySpan) {
-            // скрываем все другие инпуты
             document.querySelectorAll('.value-input').forEach(el => el.classList.remove('show'));
-            // позиционируем инпут над спаном
             const rect = displaySpan.getBoundingClientRect();
             const block = displaySpan.closest('.param-block');
             const blockRect = block.getBoundingClientRect();
@@ -332,14 +395,12 @@
             showInput(durInput, durVal);
         });
 
-        // закрываем инпуты при клике вне
         document.addEventListener('click', (e) => {
             if (!e.target.closest('.value-input') && !e.target.closest('.value')) {
                 hideAllInputs();
             }
         });
 
-        // обработка ввода
         function handleInputChange(input, setter, clampFn, displaySpan, unit) {
             const raw = input.value.trim();
             if (raw === '' || raw === '-' || raw === '.' || raw === ',') return;
@@ -350,48 +411,31 @@
             displaySpan.innerHTML = val.toFixed(1) + '<span class="unit">' + unit + '</span>';
             input.value = val.toFixed(1);
             hideAllInputs();
+            if (isPlaying) stopSweep();
         }
 
         startInput.addEventListener('blur', () => {
             handleInputChange(startInput, (v) => startFreq = v, clampFreq, startVal, 'Гц');
         });
         startInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                startInput.blur();
-            }
-            if (e.key === 'Escape') {
-                startInput.value = startFreq.toFixed(1);
-                hideAllInputs();
-            }
+            if (e.key === 'Enter') { e.preventDefault(); startInput.blur(); }
+            if (e.key === 'Escape') { startInput.value = startFreq.toFixed(1); hideAllInputs(); }
         });
 
         endInput.addEventListener('blur', () => {
             handleInputChange(endInput, (v) => endFreq = v, clampFreq, endVal, 'Гц');
         });
         endInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                endInput.blur();
-            }
-            if (e.key === 'Escape') {
-                endInput.value = endFreq.toFixed(1);
-                hideAllInputs();
-            }
+            if (e.key === 'Enter') { e.preventDefault(); endInput.blur(); }
+            if (e.key === 'Escape') { endInput.value = endFreq.toFixed(1); hideAllInputs(); }
         });
 
         durInput.addEventListener('blur', () => {
             handleInputChange(durInput, (v) => duration = v, clampDur, durVal, 'с');
         });
         durInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                durInput.blur();
-            }
-            if (e.key === 'Escape') {
-                durInput.value = duration.toFixed(1);
-                hideAllInputs();
-            }
+            if (e.key === 'Enter') { e.preventDefault(); durInput.blur(); }
+            if (e.key === 'Escape') { durInput.value = duration.toFixed(1); hideAllInputs(); }
         });
 
         function clampFreq(v){ return Math.min(MAX_FREQ, Math.max(MIN_FREQ, v)); }
@@ -428,6 +472,7 @@
             }
             updateDisplay();
             if(holdDelta < ACCEL_MAX) holdDelta = Math.min(holdDelta+0.06, ACCEL_MAX);
+            if (isPlaying) stopSweep();
         }
 
         function startHold(target, dir) {
@@ -460,26 +505,35 @@
             });
         });
 
-        // ===== ПРОСЛУШИВАНИЕ =====
-        let audioCtx = null;
-        let isPlaying = false;
-        let sweepNode = null;
-
-        function generateSweepBuffer(sampleRate, durationSec, fStart, fEnd) {
+        // ===== ГЕНЕРАЦИЯ СВИПА (общая) =====
+        function generateSweepBuffer(sampleRate, durationSec, fStart, fEnd, logarithmic) {
             const numSamples = Math.floor(sampleRate * durationSec);
             if(numSamples < 1) return null;
             const buffer = new Float32Array(numSamples);
             const amp = 0.35;
+            
+            // Защита от логарифма при start <= 0
+            let useLog = logarithmic && fStart > 0 && fEnd > 0;
+            
             if(fStart === 0 && fEnd === 0) {
                 buffer.fill(0);
             } else {
                 for(let i=0; i<numSamples; i++) {
                     const t = i / sampleRate;
                     const frac = i / numSamples;
-                    const freq = fStart + (fEnd - fStart) * frac;
+                    let freq;
+                    if (useLog) {
+                        // Логарифмический: частота меняется в геометрической прогрессии
+                        freq = fStart * Math.pow(fEnd / fStart, frac);
+                    } else {
+                        // Линейный
+                        freq = fStart + (fEnd - fStart) * frac;
+                    }
                     buffer[i] = amp * Math.sin(2 * Math.PI * freq * t);
                 }
             }
+            
+            // плавный фейд
             const fade = Math.min(Math.floor(sampleRate * 0.008), Math.floor(numSamples / 15));
             if(fade > 0 && numSamples > fade * 2) {
                 for(let i=0; i<fade; i++) {
@@ -490,6 +544,11 @@
             }
             return buffer;
         }
+
+        // ===== ПРОСЛУШИВАНИЕ =====
+        let audioCtx = null;
+        let isPlaying = false;
+        let sweepNode = null;
 
         function playSweep() {
             if(isPlaying) {
@@ -515,7 +574,7 @@
 
             const sampleRate = 48000;
             const dur = Math.min(duration, 60);
-            const bufData = generateSweepBuffer(sampleRate, dur, startFreq, endFreq);
+            const bufData = generateSweepBuffer(sampleRate, dur, startFreq, endFreq, isLog);
             if(!bufData) { alert('Слишком короткая длительность'); return; }
 
             const audioBuffer = audioCtx.createBuffer(1, bufData.length, sampleRate);
@@ -642,21 +701,27 @@
             });
         });
 
-        // === ГЕНЕРАЦИЯ СВИПА (для экспорта) ===
+        // === ГЕНЕРАЦИЯ ДЛЯ ЭКСПОРТА ===
         function generateSweep(sampleRate, bits, format, mp3Bitrate){
             const fs = startFreq, fe = endFreq, dur = duration;
             const numSamples = Math.floor(sampleRate * dur);
             if(numSamples<1){ alert('Слишком короткая длительность'); return null; }
             const buffer = new Float32Array(numSamples);
             const amp = 0.8;
+            let useLog = isLog && fs > 0 && fe > 0;
+            
             if(fs===0 && fe===0){
                 buffer.fill(0);
             } else {
-                const f0 = fs, f1 = fe;
                 for(let i=0;i<numSamples;i++){
                     const t = i / sampleRate;
                     const frac = i / numSamples;
-                    const freq = f0 + (f1 - f0) * frac;
+                    let freq;
+                    if (useLog) {
+                        freq = fs * Math.pow(fe / fs, frac);
+                    } else {
+                        freq = fs + (fe - fs) * frac;
+                    }
                     buffer[i] = amp * Math.sin(2*Math.PI * freq * t);
                 }
             }
@@ -775,6 +840,7 @@
 
         // инициализация
         updateDisplay();
+        updateLawLabel();
     })();
 </script>
 </body>
