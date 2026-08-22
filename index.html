@@ -4,9 +4,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
-    <title>Свип‑генератор — синус 0–20000 Гц</title>
+    <meta name="description"
+        content="Генератор синуса 0–20000 Гц. PCM WAV 8/16/24/32 бит + MP3 8–320 кбит/с. С поддержкой 8–384 кГц.">
+    <meta name="author" content="Pavel Volkov / volkovhl.github.io">
+    <title>Генератор синуса 0–20000 Гц — логарифмическая и линейная шкала</title>
     <link rel="icon"
-        href="data:image/svg+xml,&lt;svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'&gt;&lt;text y='.9em' font-size='90'&gt;↗️&lt;/text&gt;&lt;/svg&gt;">
+        href="data:image/svg+xml,&lt;svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'&gt;&lt;text y='.9em' font-size='90'&gt;〰️&lt;/text&gt;&lt;/svg&gt;">
     <style>
         * {
             margin: 0;
@@ -41,8 +44,7 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
-            gap: 8px;
+            justify-content: space-between;
             margin: 0 auto;
             padding: 2px 0;
         }
@@ -53,15 +55,17 @@
             justify-content: center;
             gap: 12px;
             flex-shrink: 0;
+            margin-top: 0;
             flex-wrap: wrap;
         }
 
         #freqDisplay {
-            font-size: clamp(28px, 8vw, 48px);
+            font-size: clamp(32px, 10vw, 56px);
             font-weight: 700;
-            color: #0b3b5c;
             letter-spacing: 1px;
+            color: #0b3b5c;
             text-shadow: 0 0 20px rgba(11, 59, 92, 0.08);
+            line-height: 1.2;
         }
 
         #freqUnit {
@@ -71,69 +75,183 @@
             margin-left: 4px;
         }
 
-        .param-block {
+        #freqInput {
             background: #ffffff;
             border: 2px solid #b8c9da;
-            border-radius: 20px;
-            padding: 8px 16px;
+            border-radius: 12px;
+            color: #1a2f44;
+            font-size: clamp(20px, 5vw, 32px);
+            font-weight: 600;
+            width: clamp(100px, 22vw, 160px);
+            padding: 4px 8px;
+            text-align: center;
+            outline: none;
+            transition: border-color 0.2s;
+            font-family: inherit;
+            -moz-appearance: textfield;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+
+        #freqInput::-webkit-outer-spin-button,
+        #freqInput::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        #freqInput:focus {
+            border-color: #2d6a8f;
+            box-shadow: 0 0 0 3px rgba(45, 106, 143, 0.15);
+        }
+
+        #sliderWrapper {
+            flex: 1 1 auto;
             width: 100%;
-            max-width: 400px;
+            min-height: 30px;
+            touch-action: none;
             display: flex;
             align-items: center;
+            justify-content: center;
+            position: relative;
             gap: 12px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+
+        .scale-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
             flex-shrink: 0;
         }
 
-        .param-block label {
-            font-weight: 600;
+        .scale-btn {
+            background: #e8edf2;
+            border: 2px solid #c7d6e5;
             color: #4a607a;
-            font-size: clamp(14px, 3vw, 18px);
-            min-width: 70px;
-        }
-
-        .param-block .value {
-            font-size: clamp(24px, 5vw, 36px);
+            font-size: clamp(28px, 4.4vw, 40px);
             font-weight: 700;
-            color: #0b3b5c;
-            min-width: 80px;
+            padding: 12px 24px;
+            border-radius: 20px;
+            cursor: pointer;
+            touch-action: manipulation;
+            transition: all 0.2s;
+            font-family: inherit;
+            min-width: 88px;
             text-align: center;
-        }
-
-        .param-block .unit {
-            font-size: 0.5em;
-            font-weight: 400;
-            color: #4a607a;
-            margin-left: 2px;
-        }
-
-        .fine-group {
+            line-height: 1.3;
             display: flex;
-            gap: 6px;
-            margin-left: auto;
+            flex-direction: column;
+            align-items: center;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+        }
+
+        .scale-btn .label {
+            font-size: clamp(18px, 2.8vw, 26px);
+            font-weight: 500;
+            color: #6a7f99;
+            line-height: 1.2;
+            margin-top: 2px;
+            letter-spacing: 0.3px;
+        }
+
+        .scale-btn.active {
+            border-color: #2d6a8f;
+            background: #d5e3f0;
+            color: #0b3b5c;
+            box-shadow: 0 0 0 3px rgba(45, 106, 143, 0.12);
+        }
+
+        .scale-btn.active .label {
+            color: #1a4a6a;
+        }
+
+        .scale-btn:active {
+            transform: scale(0.94);
+        }
+
+        #freqSlider {
+            width: min(60vh, 76%);
+            height: 38px;
+            -webkit-appearance: none;
+            appearance: none;
+            border-radius: 19px;
+            background: linear-gradient(to right, #6a8fbb, #2d6a8f, #c47b2a, #c92a3a);
+            outline: none;
+            cursor: pointer;
+            touch-action: none;
+            transform: rotate(-90deg);
+            box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.08);
+        }
+
+        #freqSlider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #ffffff;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.15), 0 4px 12px rgba(0, 0, 0, 0.1);
+            border: 2px solid #ffffff;
+            transition: 0.1s;
+            touch-action: none;
+        }
+
+        #freqSlider::-webkit-slider-thumb:active {
+            transform: scale(1.15);
+            box-shadow: 0 0 30px rgba(45, 106, 143, 0.3);
+        }
+
+        #freqSlider::-moz-range-thumb {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #ffffff;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+            border: 2px solid #ffffff;
+            cursor: pointer;
+            touch-action: none;
+        }
+
+        .fine-tune-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+            min-width: 52px;
         }
 
         .fine-btn {
             background: #e8edf2;
             border: 2px solid #c7d6e5;
             color: #1a2f44;
-            font-size: clamp(22px, 4vw, 32px);
+            font-size: clamp(26px, 4vw, 36px);
             font-weight: 700;
-            padding: 4px 18px;
-            border-radius: 40px;
+            padding: 12px 24px;
+            border-radius: 20px;
             cursor: pointer;
             touch-action: manipulation;
             transition: all 0.15s;
             font-family: inherit;
-            min-width: 48px;
+            min-width: 104px;
+            text-align: center;
+            line-height: 1.3;
             box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
             display: flex;
+            flex-direction: column;
             align-items: center;
-            justify-content: center;
+        }
+
+        .fine-btn .label {
+            font-size: clamp(14px, 2.4vw, 22px);
+            font-weight: 500;
+            color: #6a7f99;
+            line-height: 1.2;
+            margin-top: 1px;
+            letter-spacing: 0.3px;
         }
 
         .fine-btn:active {
-            transform: scale(0.92);
+            transform: scale(0.94);
             background: #d5e0eb;
         }
 
@@ -144,23 +262,133 @@
             justify-content: center;
             gap: 10px;
             flex-shrink: 0;
-            margin: 4px 0;
+            margin-bottom: 2px;
         }
 
-        #backBtn,
-        #downloadBtn {
-            background: #e3eaf2;
+        #toggleBtn {
+            background: #d5e3f0;
             border: 2px solid #b8c9da;
             color: #0b3b5c;
-            font-size: clamp(16px, 3.5vw, 20px);
+            font-size: clamp(16px, 4vw, 20px);
             font-weight: 600;
             padding: 10px 28px;
             border-radius: 50px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
             letter-spacing: 1px;
+            transition: all 0.25s ease;
+            touch-action: manipulation;
+            cursor: pointer;
+            flex: 0 1 auto;
+            min-width: 140px;
+        }
+
+        #toggleBtn:active {
+            transform: scale(0.94);
+        }
+
+        #toggleBtn.active {
+            background: #2a7a5a;
+            border-color: #4a9a6a;
+            color: #ffffff;
+            box-shadow: 0 0 30px rgba(42, 122, 90, 0.25);
+        }
+
+        #toggleBtn.waiting {
+            background: #d4a040;
+            border-color: #c49030;
+            color: #ffffff;
+            animation: pulse 1.2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.6;
+            }
+        }
+
+        .duration-group {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: #ffffff;
+            padding: 4px 12px 4px 8px;
+            border-radius: 50px;
+            border: 2px solid #c7d6e5;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+        }
+
+        .duration-group label {
+            color: #4a607a;
+            font-size: clamp(13px, 2.5vw, 16px);
+            font-weight: 500;
+        }
+
+        #durationInput {
+            background: transparent;
+            border: none;
+            color: #1a2f44;
+            font-size: clamp(16px, 4vw, 22px);
+            font-weight: 600;
+            width: clamp(70px, 16vw, 110px);
+            text-align: center;
+            outline: none;
+            font-family: inherit;
+            -moz-appearance: textfield;
+            padding: 4px 0;
+        }
+
+        #durationInput::-webkit-outer-spin-button,
+        #durationInput::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        .duration-group span {
+            color: #4a607a;
+            font-size: clamp(13px, 2.5vw, 16px);
+        }
+
+        #downloadBtn {
+            background: #e3eaf2;
+            border: 2px solid #b8c9da;
+            color: #0b3b5c;
+            font-size: clamp(16px, 4vw, 20px);
+            font-weight: 600;
+            padding: 10px 28px;
+            border-radius: 50px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+            letter-spacing: 1px;
+            transition: all 0.25s ease;
+            touch-action: manipulation;
+            cursor: pointer;
+            flex: 0 1 auto;
+        }
+
+        #downloadBtn:active {
+            transform: scale(0.94);
+        }
+
+        /* ===== КНОПКА СВИП ===== */
+        #sweepBtn {
+            background: #e8edf2;
+            border: 2px solid #c7d6e5;
+            color: #1a2f44;
+            font-size: clamp(14px, 3vw, 18px);
+            font-weight: 600;
+            padding: 8px 24px;
+            border-radius: 50px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+            letter-spacing: 0.5px;
             transition: all 0.2s ease;
             touch-action: manipulation;
             cursor: pointer;
+            font-family: inherit;
             flex: 0 1 auto;
             text-decoration: none;
             display: inline-flex;
@@ -168,39 +396,67 @@
             gap: 8px;
         }
 
-        #backBtn:active,
-        #downloadBtn:active {
+        #sweepBtn:hover {
+            background: #d5e3f0;
+            border-color: #2d6a8f;
+            box-shadow: 0 0 20px rgba(45, 106, 143, 0.1);
+        }
+
+        #sweepBtn:active {
             transform: scale(0.94);
         }
 
-        #downloadBtn {
+        #sweepBtn .icon {
+            font-size: 1.2em;
+        }
+
+        /* ===== КНОПКА АЛИАСИНГ ===== */
+        .demo-row {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            flex-shrink: 0;
+            margin: 4px 0;
+        }
+
+        #demoBtn {
+            background: #e8edf2;
+            border: 2px solid #c7d6e5;
+            color: #1a2f44;
+            font-size: clamp(14px, 3vw, 18px);
+            font-weight: 600;
+            padding: 8px 24px;
+            border-radius: 50px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+            letter-spacing: 0.5px;
+            transition: all 0.2s ease;
+            touch-action: manipulation;
+            cursor: pointer;
+            font-family: inherit;
+            flex: 0 1 auto;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        #demoBtn:hover {
             background: #d5e3f0;
             border-color: #2d6a8f;
+            box-shadow: 0 0 20px rgba(45, 106, 143, 0.1);
         }
 
-        .footer-links {
-            flex: 0 0 auto;
-            text-align: center;
-            font-size: clamp(12px, 2.8vw, 14px);
-            border-top: 1px solid #c7d6e5;
-            padding: 10px 0 4px 0;
-            width: 100%;
-            max-width: 750px;
-            margin: 0 auto;
-            background: #f0f4f8;
+        #demoBtn:active {
+            transform: scale(0.94);
         }
 
-        .footer-links a {
-            color: #4a607a;
-            text-decoration: none;
-            margin: 0 8px;
+        #demoBtn .icon {
+            font-size: 1.2em;
         }
 
-        .footer-links a:hover {
-            text-decoration: underline;
-        }
-
-        /* панель WAV/MP3 */
+        /* ===== Панель выбора формата ===== */
         #wavPanel {
             position: fixed;
             left: 0;
@@ -321,6 +577,38 @@
             transform: scale(0.96);
         }
 
+        #hint {
+            font-size: clamp(11px, 2.5vw, 13px);
+            color: #6a7f99;
+            letter-spacing: 0.5px;
+            flex-shrink: 0;
+            margin-top: 0;
+            margin-bottom: 1px;
+        }
+
+        .footer-links {
+            flex: 0 0 auto;
+            text-align: center;
+            font-size: clamp(12px, 2.8vw, 14px);
+            border-top: 1px solid #c7d6e5;
+            padding: 10px 0 4px 0;
+            width: 100%;
+            max-width: 750px;
+            margin: 0 auto;
+            background: #f0f4f8;
+        }
+
+        .footer-links a {
+            color: #4a607a;
+            text-decoration: none;
+            margin: 0 8px;
+        }
+
+        .footer-links a:hover {
+            text-decoration: underline;
+        }
+
+        /* Подсказка для MP3 */
         .mp3-hint {
             display: none;
             background: #eef3f8;
@@ -343,56 +631,200 @@
             margin-right: 4px;
         }
 
-        @media (max-height:600px) {
-            .param-block {
-                padding: 6px 12px;
-                gap: 8px;
+        @media (max-height: 600px) {
+            #freqSlider {
+                height: 30px;
+                width: min(50vh, 68%);
+            }
+
+            #freqSlider::-webkit-slider-thumb {
+                width: 26px;
+                height: 26px;
             }
 
             .fine-btn {
-                font-size: 20px;
-                padding: 2px 14px;
-                min-width: 40px;
+                font-size: clamp(20px, 3vw, 28px);
+                padding: 8px 16px;
+                min-width: 80px;
             }
 
-            .param-block .value {
-                font-size: 22px;
-                min-width: 60px;
+            .fine-btn .label {
+                font-size: clamp(10px, 1.8vw, 16px);
             }
 
-            #backBtn,
-            #downloadBtn {
-                padding: 8px 18px;
+            .scale-btn {
+                font-size: clamp(20px, 3.4vw, 32px);
+                padding: 8px 16px;
+                min-width: 64px;
+            }
+
+            .scale-btn .label {
+                font-size: clamp(12px, 2vw, 18px);
+            }
+
+            #toggleBtn,
+            #downloadBtn,
+            #sweepBtn,
+            #demoBtn {
+                padding: 8px 20px;
                 font-size: 15px;
+            }
+
+            #toggleBtn {
+                min-width: 110px;
+            }
+
+            #sweepBtn,
+            #demoBtn {
+                font-size: 13px;
+                padding: 6px 16px;
+            }
+
+            .footer-links {
+                padding-top: 6px;
+                font-size: 11px;
+            }
+
+            #freqInput {
+                font-size: 20px;
+                width: 90px;
+                padding: 2px 6px;
+            }
+
+            #durationInput {
+                font-size: 16px;
+                width: 70px;
+            }
+
+            .duration-group {
+                padding: 2px 10px 2px 6px;
+            }
+
+            .fine-tune-group {
+                min-width: 40px;
+                gap: 6px;
             }
         }
 
-        @media (max-height:480px) {
-            .param-block {
-                padding: 4px 8px;
-                gap: 4px;
+        @media (max-height: 480px) {
+            #freqSlider {
+                height: 24px;
+                width: min(40vh, 58%);
+            }
+
+            #freqSlider::-webkit-slider-thumb {
+                width: 22px;
+                height: 22px;
             }
 
             .fine-btn {
-                font-size: 16px;
-                padding: 2px 10px;
-                min-width: 32px;
+                font-size: clamp(16px, 2.4vw, 22px);
+                padding: 6px 12px;
+                min-width: 60px;
             }
 
-            .param-block .value {
-                font-size: 18px;
-                min-width: 50px;
+            .fine-btn .label {
+                font-size: clamp(8px, 1.4vw, 12px);
             }
 
-            .param-block label {
-                font-size: 12px;
-                min-width: 50px;
+            .scale-btn {
+                font-size: clamp(16px, 2.6vw, 24px);
+                padding: 6px 12px;
+                min-width: 48px;
+                border-radius: 14px;
             }
 
-            #backBtn,
-            #downloadBtn {
-                padding: 6px 14px;
+            .scale-btn .label {
+                font-size: clamp(10px, 1.6vw, 14px);
+            }
+
+            #toggleBtn,
+            #downloadBtn,
+            #sweepBtn,
+            #demoBtn {
+                padding: 6px 16px;
                 font-size: 13px;
+            }
+
+            #toggleBtn {
+                min-width: 90px;
+            }
+
+            #sweepBtn,
+            #demoBtn {
+                font-size: 11px;
+                padding: 4px 12px;
+            }
+
+            #freqDisplay {
+                font-size: 28px;
+            }
+
+            #hint {
+                font-size: 10px;
+            }
+
+            #freqInput {
+                font-size: 16px;
+                width: 80px;
+                padding: 2px 4px;
+            }
+
+            #durationInput {
+                font-size: 14px;
+                width: 60px;
+            }
+
+            .duration-group {
+                padding: 2px 8px 2px 4px;
+            }
+
+            .fine-tune-group {
+                min-width: 32px;
+                gap: 4px;
+            }
+        }
+
+        @media (max-width: 400px) {
+            #sliderWrapper {
+                gap: 6px;
+            }
+
+            .scale-btn {
+                font-size: clamp(18px, 3vw, 26px);
+                padding: 6px 12px;
+                min-width: 56px;
+            }
+
+            .scale-btn .label {
+                font-size: clamp(12px, 1.8vw, 16px);
+            }
+
+            .fine-btn {
+                font-size: clamp(18px, 2.8vw, 24px);
+                padding: 6px 12px;
+                min-width: 64px;
+            }
+
+            .fine-btn .label {
+                font-size: clamp(10px, 1.6vw, 14px);
+            }
+
+            .fine-tune-group {
+                min-width: 30px;
+                gap: 4px;
+            }
+
+            #toggleBtn {
+                min-width: 80px;
+                font-size: 14px;
+                padding: 8px 16px;
+            }
+
+            #sweepBtn,
+            #demoBtn {
+                font-size: 12px;
+                padding: 6px 14px;
             }
         }
     </style>
@@ -400,63 +832,76 @@
 
 <body>
     <div class="main-wrapper">
-        <!-- заголовок + возврат -->
-        <div
-            style="display:flex; align-items:center; justify-content:space-between; width:100%; max-width:400px; flex-shrink:0; gap:8px;">
-            <div style="font-size:clamp(20px,5vw,30px); font-weight:700; color:#0b3b5c;">↗️ Свип</div>
-            <a href="index.html" id="backBtn"
-                style="padding:8px 20px; font-size:clamp(14px,3vw,18px); background:#e8edf2; border:2px solid #b8c9da; border-radius:50px; color:#0b3b5c; text-decoration:none; font-weight:600;">←
-                к генератору</a>
-        </div>
-
-        <!-- начальная частота -->
-        <div class="param-block" id="startBlock">
-            <label>Старт</label>
-            <span class="value" id="startVal">1000<span class="unit">Гц</span></span>
-            <div class="fine-group">
-                <button class="fine-btn" data-target="start" data-dir="-1">−</button>
-                <button class="fine-btn" data-target="start" data-dir="1">+</button>
+        <div class="freq-row">
+            <div id="freqDisplay">
+                <span id="freqValue">1000.0</span><span id="freqUnit">Гц</span>
             </div>
+            <input type="number" id="freqInput" min="0" max="20000" step="0.1" value="1000">
         </div>
 
-        <!-- длительность -->
-        <div class="param-block" id="durBlock">
-            <label>Длит.</label>
-            <span class="value" id="durVal">60<span class="unit">с</span></span>
-            <div class="fine-group">
-                <button class="fine-btn" data-target="dur" data-dir="-1">−</button>
-                <button class="fine-btn" data-target="dur" data-dir="1">+</button>
+        <div id="sliderWrapper">
+            <div class="scale-group">
+                <button class="scale-btn active" data-scale="log">
+                    A
+                    <span class="label">логарифм.</span>
+                </button>
+                <button class="scale-btn" data-scale="lin">
+                    B
+                    <span class="label">линейная</span>
+                </button>
             </div>
-        </div>
 
-        <!-- конечная частота -->
-        <div class="param-block" id="endBlock">
-            <label>Финиш</label>
-            <span class="value" id="endVal">20000<span class="unit">Гц</span></span>
-            <div class="fine-group">
-                <button class="fine-btn" data-target="end" data-dir="-1">−</button>
-                <button class="fine-btn" data-target="end" data-dir="1">+</button>
+            <input type="range" id="freqSlider" min="0" max="1" step="0.0005" value="0.5">
+
+            <div class="fine-tune-group">
+                <button class="fine-btn" id="fineUp">
+                    +0.1
+                    <span class="label">вверх</span>
+                </button>
+                <button class="fine-btn" id="fineDown">
+                    −0.1
+                    <span class="label">вниз</span>
+                </button>
             </div>
         </div>
 
         <div class="controls-row">
+            <button id="toggleBtn">▶ Включить</button>
+            <div class="duration-group">
+                <label>⏱</label>
+                <input type="number" id="durationInput" min="0.1" max="1000" step="0.1" value="60">
+                <span>с</span>
+            </div>
             <button id="downloadBtn">⬇ Файл</button>
         </div>
-        <div
-            style="font-size:clamp(11px,2.5vw,13px); color:#6a7f99; letter-spacing:0.5px; flex-shrink:0; margin-top:2px;">
-            линейный свип от старта до финиша</div>
+
+        <!-- КНОПКИ ДЕМО -->
+        <div class="demo-row">
+            <!-- НОВАЯ КНОПКА СВИП -->
+            <a href="sweep-generator" id="sweepBtn">
+                <span class="icon">↗️</span> Свип
+            </a>
+            <!-- КНОПКА АЛИАСИНГ -->
+            <a href="aliasing-demo.html" id="demoBtn" target="_blank">
+                <span class="icon">🌀</span> Эффект Найквиста (Алиасинг)
+            </a>
+        </div>
+
+        <div id="hint">тяните вверх‑вниз или введите частоту</div>
     </div>
 
-    <!-- панель форматов -->
+    <!-- Панель выбора формата -->
     <div id="wavPanel">
         <div class="wav-panel-inner">
-            <div class="wav-row"><label>формат</label>
+            <div class="wav-row">
+                <label>формат</label>
                 <div class="wav-chips" id="formatChips">
                     <button class="wav-chip active" data-format="pcm">PCM</button>
                     <button class="wav-chip" data-format="mp3">MP3</button>
                 </div>
             </div>
-            <div class="wav-row" id="rateRow"><label>кГц</label>
+            <div class="wav-row" id="rateRow">
+                <label>кГц</label>
                 <div class="wav-chips" id="rateChips">
                     <button class="wav-chip small" data-rate="8000">8</button>
                     <button class="wav-chip small" data-rate="16000">16</button>
@@ -469,7 +914,8 @@
                     <button class="wav-chip small" data-rate="384000">384</button>
                 </div>
             </div>
-            <div class="wav-row" id="bitRow"><label>бит</label>
+            <div class="wav-row" id="bitRow">
+                <label>бит</label>
                 <div class="wav-chips" id="bitChips">
                     <button class="wav-chip" data-bits="8">8</button>
                     <button class="wav-chip active" data-bits="16">16</button>
@@ -477,30 +923,36 @@
                     <button class="wav-chip" data-bits="32">32</button>
                 </div>
             </div>
-            <div class="wav-row" id="mp3Row" style="display:none;"><label>кбит/с</label>
+            <div class="wav-row" id="mp3Row" style="display:none;">
+                <label>кбит/с</label>
                 <div class="wav-chips" id="mp3Chips">
-                    <button class="wav-chip small" data-mp3="8">8</button><button class="wav-chip small"
-                        data-mp3="16">16</button>
-                    <button class="wav-chip small" data-mp3="24">24</button><button class="wav-chip small"
-                        data-mp3="32">32</button>
-                    <button class="wav-chip small" data-mp3="40">40</button><button class="wav-chip small"
-                        data-mp3="48">48</button>
-                    <button class="wav-chip small" data-mp3="56">56</button><button class="wav-chip small"
-                        data-mp3="64">64</button>
-                    <button class="wav-chip small" data-mp3="80">80</button><button class="wav-chip small"
-                        data-mp3="96">96</button>
-                    <button class="wav-chip small" data-mp3="112">112</button><button class="wav-chip small active"
-                        data-mp3="128">128</button>
-                    <button class="wav-chip small" data-mp3="160">160</button><button class="wav-chip small"
-                        data-mp3="192">192</button>
-                    <button class="wav-chip small" data-mp3="224">224</button><button class="wav-chip small"
-                        data-mp3="256">256</button>
+                    <button class="wav-chip small" data-mp3="8">8</button>
+                    <button class="wav-chip small" data-mp3="16">16</button>
+                    <button class="wav-chip small" data-mp3="24">24</button>
+                    <button class="wav-chip small" data-mp3="32">32</button>
+                    <button class="wav-chip small" data-mp3="40">40</button>
+                    <button class="wav-chip small" data-mp3="48">48</button>
+                    <button class="wav-chip small" data-mp3="56">56</button>
+                    <button class="wav-chip small" data-mp3="64">64</button>
+                    <button class="wav-chip small" data-mp3="80">80</button>
+                    <button class="wav-chip small" data-mp3="96">96</button>
+                    <button class="wav-chip small" data-mp3="112">112</button>
+                    <button class="wav-chip small active" data-mp3="128">128</button>
+                    <button class="wav-chip small" data-mp3="160">160</button>
+                    <button class="wav-chip small" data-mp3="192">192</button>
+                    <button class="wav-chip small" data-mp3="224">224</button>
+                    <button class="wav-chip small" data-mp3="256">256</button>
                     <button class="wav-chip small" data-mp3="320">320</button>
                 </div>
             </div>
-            <div class="mp3-hint" id="mp3Hint"><span class="icon">🌐</span> MP3 до 48 кГц. Библиотека с CDN.</div>
-            <div class="wav-actions"><button id="wavPanelClose">Закрыть</button><button id="wavDownloadConfirm">⬇
-                    Скачать</button></div>
+            <!-- Подсказка для MP3 -->
+            <div class="mp3-hint" id="mp3Hint">
+                <span class="icon">🌐</span> Для MP3 доступны частоты до 48 кГц. Библиотека загружается с CDN.
+            </div>
+            <div class="wav-actions">
+                <button id="wavPanelClose">Закрыть</button>
+                <button id="wavDownloadConfirm">⬇ Скачать</button>
+            </div>
         </div>
     </div>
 
@@ -509,315 +961,850 @@
         <a href="https://www.youtube.com/@Pavel_Volkov" target="_blank">Дела Техники</a>
     </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/lamejs/1.2.1/lame.min.js"></script>
+    <!-- Подключаем lamejs для MP3 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lamejs/1.2.1/lame.min.js">
+    </script>
+
     <script>
         (function () {
             'use strict';
 
-            // === параметры ===
-            let startFreq = 1000;
-            let endFreq = 20000;
-            let duration = 60;
-            const MIN_FREQ = 0, MAX_FREQ = 20000;
-            const MIN_DUR = 0.1, MAX_DUR = 1000;
+            // ===== ОСНОВНЫЕ ЭЛЕМЕНТЫ =====
+            const slider = document.getElementById('freqSlider');
+            const freqValue = document.getElementById('freqValue');
+            const freqInput = document.getElementById('freqInput');
+            const durationInput = document.getElementById('durationInput');
+            const toggleBtn = document.getElementById('toggleBtn');
+            const downloadBtn = document.getElementById('downloadBtn');
+            const fineUp = document.getElementById('fineUp');
+            const fineDown = document.getElementById('fineDown');
 
-            // DOM
-            const startVal = document.getElementById('startVal');
-            const endVal = document.getElementById('endVal');
-            const durVal = document.getElementById('durVal');
+            let audioCtx = null;
+            let oscillator = null;
+            let gainNode = null;
+            let isPlaying = false;
+            let isAudioReady = false;
+            let ignoreSliderUpdate = false;
+            let ignoreInputUpdate = false;
 
-            // === ускоренное изменение ===
-            let holdInterval = null, holdTimeout = null;
-            let holdDelta = 0.1, holdDirection = 0;
-            let holdTarget = null; // 'start','end','dur'
-            const HOLD_DELAY = 400, ACCEL_INTERVAL = 60, ACCEL_MAX = 3.0;
+            const MIN_FREQ = 0;
+            const MAX_FREQ = 20000;
+            const LOG_MIN = 1;
+            const RATIO = MAX_FREQ / LOG_MIN;
 
-            function updateDisplay() {
-                startVal.innerHTML = startFreq.toFixed(1) + '<span class="unit">Гц</span>';
-                endVal.innerHTML = endFreq.toFixed(1) + '<span class="unit">Гц</span>';
-                durVal.innerHTML = duration.toFixed(1) + '<span class="unit">с</span>';
-            }
+            let currentScale = 'log';
+            let exactFreq = 1000;
 
-            function clampFreq(v) {return Math.min(MAX_FREQ, Math.max(MIN_FREQ, v));}
-            function clampDur(v) {return Math.min(MAX_DUR, Math.max(MIN_DUR, v));}
+            // --- переменные для ускоренного набора ---
+            let holdInterval = null;
+            let holdTimeout = null;
+            let holdDelta = 0.1;
+            let holdDirection = 0;
+            const HOLD_DELAY = 400;
+            const ACCEL_STEP = 0.1;
+            const ACCEL_MAX = 3.0;
+            const ACCEL_INTERVAL = 60;
 
-            function applyDelta(target, dir) {
-                if (target === 'start') {
-                    let v = startFreq + dir * holdDelta;
-                    v = Math.round(v * 10) / 10;
-                    startFreq = clampFreq(v);
-                } else if (target === 'end') {
-                    let v = endFreq + dir * holdDelta;
-                    v = Math.round(v * 10) / 10;
-                    endFreq = clampFreq(v);
-                } else if (target === 'dur') {
-                    let v = duration + dir * holdDelta;
-                    v = Math.round(v * 10) / 10;
-                    duration = clampDur(v);
+            // --- преобразования ---
+            function sliderToFreq(val) {
+                if (val <= 0) return 0;
+                const v = Math.min(1, Math.max(0, val));
+                if (currentScale === 'log') {
+                    return LOG_MIN * Math.pow(RATIO, v);
+                } else {
+                    return MIN_FREQ + v * (MAX_FREQ - MIN_FREQ);
                 }
-                updateDisplay();
-                if (holdDelta < ACCEL_MAX) holdDelta = Math.min(holdDelta + 0.06, ACCEL_MAX);
             }
 
-            function startHold(target, dir) {
-                if (holdInterval) {clearInterval(holdInterval); holdInterval = null;}
-                if (holdTimeout) {clearTimeout(holdTimeout); holdTimeout = null;}
-                holdTarget = target; holdDirection = dir; holdDelta = 0.1;
-                applyDelta(target, dir);
+            function freqToSlider(freq) {
+                const f = Math.min(MAX_FREQ, Math.max(MIN_FREQ, freq));
+                if (f <= 0) return 0;
+                if (currentScale === 'log') {
+                    const clamped = Math.min(MAX_FREQ, Math.max(LOG_MIN, f));
+                    return Math.log(clamped / LOG_MIN) / Math.log(RATIO);
+                } else {
+                    return (f - MIN_FREQ) / (MAX_FREQ - MIN_FREQ);
+                }
+            }
+
+            function getSliderFreq() {
+                return sliderToFreq(parseFloat(slider.value));
+            }
+
+            function getCurrentFreq() {
+                return exactFreq;
+            }
+
+            function getDuration() {
+                let val = parseFloat(durationInput.value);
+                if (isNaN(val) || val < 0.1) val = 0.1;
+                if (val > 1000) val = 1000;
+                return val;
+            }
+
+            function clampFreq(freq) {
+                return Math.min(MAX_FREQ, Math.max(MIN_FREQ, freq));
+            }
+
+            function roundFreq(freq) {
+                return Math.round(freq * 10) / 10;
+            }
+
+            function updateDisplay(freq) {
+                const rounded = roundFreq(freq);
+                if (rounded === 0) {
+                    freqValue.textContent = '0.0';
+                } else {
+                    freqValue.textContent = rounded.toFixed(1);
+                }
+                if (!ignoreInputUpdate) {
+                    ignoreInputUpdate = true;
+                    freqInput.value = rounded.toFixed(1);
+                    ignoreInputUpdate = false;
+                }
+            }
+
+            function updateOscillatorFreq(freq) {
+                if (isPlaying && oscillator && audioCtx) {
+                    try {
+                        const targetFreq = freq > 0 ? freq : 1;
+                        oscillator.frequency.setTargetAtTime(targetFreq, audioCtx.currentTime, 0.01);
+                        gainNode.gain.setTargetAtTime(freq > 0 ? 0.3 : 0, audioCtx.currentTime, 0.01);
+                    } catch (e) {
+                        oscillator.frequency.value = freq > 0 ? freq : 1;
+                        gainNode.gain.value = freq > 0 ? 0.3 : 0;
+                    }
+                }
+            }
+
+            function setScale(scale) {
+                if (scale === currentScale) return;
+                currentScale = scale;
+                document.querySelectorAll('.scale-btn').forEach(btn => {
+                    btn.classList.toggle('active', btn.dataset.scale === scale);
+                });
+                const freq = getCurrentFreq();
+                const sliderVal = freqToSlider(freq);
+                ignoreSliderUpdate = true;
+                slider.value = Math.min(1, Math.max(0, sliderVal));
+                ignoreSliderUpdate = false;
+            }
+
+            // === Ускоренное изменение ===
+            function applyHoldDelta() {
+                let newFreq = getCurrentFreq() + holdDirection * holdDelta;
+                newFreq = Math.round(newFreq * 10) / 10;
+                if (newFreq < MIN_FREQ) newFreq = MIN_FREQ;
+                if (newFreq > MAX_FREQ) newFreq = MAX_FREQ;
+                const clamped = clampFreq(newFreq);
+                exactFreq = clamped;
+                const sliderVal = freqToSlider(clamped);
+                ignoreSliderUpdate = true;
+                slider.value = Math.min(1, Math.max(0, sliderVal));
+                ignoreSliderUpdate = false;
+                updateDisplay(clamped);
+                updateOscillatorFreq(clamped);
+                if (holdDelta < ACCEL_MAX) {
+                    holdDelta = Math.min(holdDelta + 0.06, ACCEL_MAX);
+                }
+            }
+
+            function startHold(direction) {
+                if (holdInterval) {
+                    clearInterval(holdInterval);
+                    holdInterval = null;
+                }
+                if (holdTimeout) {
+                    clearTimeout(holdTimeout);
+                    holdTimeout = null;
+                }
+                holdDirection = direction;
+                holdDelta = ACCEL_STEP;
+                applyHoldDelta();
                 holdTimeout = setTimeout(() => {
                     holdTimeout = null;
                     if (holdInterval) return;
-                    holdInterval = setInterval(() => {applyDelta(holdTarget, holdDirection);}, ACCEL_INTERVAL);
+                    holdInterval = setInterval(() => {
+                        applyHoldDelta();
+                    }, ACCEL_INTERVAL);
                 }, HOLD_DELAY);
             }
 
             function stopHold() {
-                if (holdTimeout) {clearTimeout(holdTimeout); holdTimeout = null;}
-                if (holdInterval) {clearInterval(holdInterval); holdInterval = null;}
-                holdDirection = 0; holdTarget = null; holdDelta = 0.1;
+                if (holdTimeout) {
+                    clearTimeout(holdTimeout);
+                    holdTimeout = null;
+                }
+                if (holdInterval) {
+                    clearInterval(holdInterval);
+                    holdInterval = null;
+                }
+                holdDirection = 0;
+                holdDelta = ACCEL_STEP;
             }
 
-            // привязка ко всем кнопкам +/-
-            document.querySelectorAll('.fine-btn').forEach(btn => {
-                const target = btn.dataset.target;
-                const dir = parseInt(btn.dataset.dir, 10);
-                const startFn = (e) => {e.preventDefault(); startHold(target, dir);};
-                const stopFn = (e) => {e.preventDefault(); stopHold();};
-                btn.addEventListener('mousedown', startFn);
-                btn.addEventListener('touchstart', startFn, {passive: false});
-                ['mouseup', 'mouseleave', 'touchend', 'touchcancel'].forEach(ev => {
-                    btn.addEventListener(ev, stopFn, {passive: false});
+            function setupFineButton(btn, direction) {
+                btn.addEventListener('mousedown', function (e) {
+                    e.preventDefault();
+                    startHold(direction);
                 });
+                btn.addEventListener('touchstart', function (e) {
+                    e.preventDefault();
+                    startHold(direction);
+                }, { passive: false });
+
+                const stopEvents = ['mouseup', 'mouseleave', 'touchend', 'touchcancel'];
+                stopEvents.forEach(evt => {
+                    btn.addEventListener(evt, function (e) {
+                        e.preventDefault();
+                        stopHold();
+                    }, { passive: false });
+                });
+            }
+
+            setupFineButton(fineUp, 1);
+            setupFineButton(fineDown, -1);
+
+            // --- звук с гарантированным запуском с первого касания ---
+            function ensureAudioContext() {
+                if (!audioCtx) {
+                    try {
+                        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    } catch (e) {
+                        console.warn('AudioContext не поддерживается');
+                        return false;
+                    }
+                }
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+                return audioCtx.state === 'running' || audioCtx.state === 'suspended';
+            }
+
+            function createOscillatorNode() {
+                if (!audioCtx) return false;
+                try {
+                    if (oscillator) {
+                        try { oscillator.stop(0); } catch (e) {}
+                        oscillator.disconnect();
+                        oscillator = null;
+                    }
+                    if (gainNode) {
+                        gainNode.disconnect();
+                        gainNode = null;
+                    }
+                    oscillator = audioCtx.createOscillator();
+                    gainNode = audioCtx.createGain();
+                    oscillator.type = 'sine';
+                    const freq = getCurrentFreq();
+                    oscillator.frequency.value = freq > 0 ? freq : 1;
+                    gainNode.gain.setValueAtTime(freq > 0 ? 0.3 : 0, audioCtx.currentTime);
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioCtx.destination);
+                    oscillator.start(0);
+                    return true;
+                } catch (e) {
+                    console.warn('Ошибка создания осциллятора:', e);
+                    return false;
+                }
+            }
+
+            function startSound() {
+                if (isPlaying) return;
+
+                if (!audioCtx || audioCtx.state === 'suspended') {
+                    if (!audioCtx) {
+                        try {
+                            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                        } catch (e) {
+                            console.warn('Не удалось создать AudioContext');
+                            toggleBtn.textContent = '⚠️ Ошибка';
+                            return;
+                        }
+                    }
+                    audioCtx.resume();
+                }
+
+                if (audioCtx.state !== 'running') {
+                    toggleBtn.textContent = '⏳ Ожидание...';
+                    toggleBtn.classList.add('waiting');
+                    setTimeout(() => {
+                        if (!isPlaying) {
+                            startSound();
+                        }
+                    }, 100);
+                    return;
+                }
+
+                if (!createOscillatorNode()) {
+                    toggleBtn.textContent = '⚠️ Ошибка';
+                    return;
+                }
+
+                isPlaying = true;
+                isAudioReady = true;
+                toggleBtn.textContent = '⏹ Выключить';
+                toggleBtn.classList.remove('waiting');
+                toggleBtn.classList.add('active');
+            }
+
+            function stopSound() {
+                if (!isPlaying) return;
+                try {
+                    if (oscillator) {
+                        try { oscillator.stop(0); } catch (e) {}
+                        oscillator.disconnect();
+                        oscillator = null;
+                    }
+                    if (gainNode) {
+                        gainNode.disconnect();
+                        gainNode = null;
+                    }
+                    isPlaying = false;
+                    toggleBtn.textContent = '▶ Включить';
+                    toggleBtn.classList.remove('active', 'waiting');
+                } catch (err) {
+                    console.warn('Ошибка остановки:', err);
+                    isPlaying = false;
+                    toggleBtn.textContent = '▶ Включить';
+                    toggleBtn.classList.remove('active', 'waiting');
+                }
+            }
+
+            function toggleSound() {
+                if (isPlaying) {
+                    stopSound();
+                    return;
+                }
+
+                if (audioCtx && audioCtx.state === 'running') {
+                    startSound();
+                    return;
+                }
+
+                if (!audioCtx) {
+                    try {
+                        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    } catch (e) {
+                        toggleBtn.textContent = '⚠️ Ошибка';
+                        return;
+                    }
+                }
+
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                    toggleBtn.textContent = '⏳ Ожидание...';
+                    toggleBtn.classList.add('waiting');
+                    setTimeout(() => {
+                        if (!isPlaying) {
+                            if (audioCtx.state === 'running') {
+                                startSound();
+                            } else {
+                                toggleSound();
+                            }
+                        }
+                    }, 150);
+                    return;
+                }
+
+                if (audioCtx.state === 'running') {
+                    startSound();
+                } else {
+                    toggleBtn.textContent = '⚠️ Ошибка';
+                }
+            }
+
+            // --- обработчик для слайдера с авто-включением ---
+            slider.addEventListener('input', function () {
+                if (ignoreSliderUpdate) return;
+                const freq = getSliderFreq();
+                exactFreq = freq;
+                updateDisplay(freq);
+                updateOscillatorFreq(freq);
+            });
+
+            // --- ввод частоты ---
+            freqInput.addEventListener('input', function () {
+                if (ignoreInputUpdate) return;
+                const rawValue = freqInput.value.trim();
+                if (rawValue === '' || rawValue === '.' || rawValue === ',' || rawValue === '-') return;
+                let val = parseFloat(rawValue);
+                if (isNaN(val)) return;
+                if (rawValue.endsWith('.') || rawValue.endsWith(',')) return;
+                if (val < MIN_FREQ) val = MIN_FREQ;
+                if (val > MAX_FREQ) val = MAX_FREQ;
+                const clamped = clampFreq(val);
+                exactFreq = clamped;
+                const sliderVal = freqToSlider(clamped);
+                ignoreSliderUpdate = true;
+                slider.value = Math.min(1, Math.max(0, sliderVal));
+                ignoreSliderUpdate = false;
+                const rounded = roundFreq(clamped);
+                freqValue.textContent = rounded === 0 ? '0.0' : rounded.toFixed(1);
+                updateOscillatorFreq(clamped);
+            });
+
+            freqInput.addEventListener('blur', function () {
+                const rawValue = freqInput.value.trim();
+                if (rawValue === '' || rawValue === '.' || rawValue === ',' || rawValue === '-') {
+                    updateDisplay(exactFreq);
+                    return;
+                }
+                let val = parseFloat(rawValue);
+                if (isNaN(val)) {
+                    updateDisplay(exactFreq);
+                    return;
+                }
+                if (val < MIN_FREQ) val = MIN_FREQ;
+                if (val > MAX_FREQ) val = MAX_FREQ;
+                const clamped = clampFreq(val);
+                exactFreq = clamped;
+                const sliderVal = freqToSlider(clamped);
+                ignoreSliderUpdate = true;
+                slider.value = Math.min(1, Math.max(0, sliderVal));
+                ignoreSliderUpdate = false;
+                updateDisplay(clamped);
+                updateOscillatorFreq(clamped);
             });
 
             // ===== ПАНЕЛЬ ФОРМАТОВ =====
-            let selectedFormat = 'pcm', selectedRate = 96000, selectedBits = 16, selectedMp3Bitrate = 128;
+            let selectedFormat = 'pcm';
+            let selectedRate = 96000;
+            let selectedBits = 16;
+            let selectedMp3Bitrate = 128;
+
             const wavPanel = document.getElementById('wavPanel');
             const wavDownloadConfirm = document.getElementById('wavDownloadConfirm');
             const wavPanelClose = document.getElementById('wavPanelClose');
+            const rateRow = document.getElementById('rateRow');
+            const bitRow = document.getElementById('bitRow');
+            const mp3Row = document.getElementById('mp3Row');
             const mp3Hint = document.getElementById('mp3Hint');
+
+            // Список частот, поддерживаемых MP3 (lamejs)
             const MP3_SUPPORTED_RATES = [8000, 16000, 22050, 32000, 44100, 48000];
+
             let lameLoaded = false;
 
-            function checkLame() {
+            function checkLameLoaded() {
                 if (typeof lamejs !== 'undefined' && lamejs.Mp3Encoder) {
                     lameLoaded = true;
-                    mp3Hint.innerHTML = '✅ MP3 готов (до 48 кГц)';
+                    mp3Hint.innerHTML = '✅ MP3 готов к работе (до 48 кГц)';
                     mp3Hint.style.borderColor = '#4a9a6a';
                     mp3Hint.style.color = '#1f6a4a';
                 }
             }
-            setTimeout(checkLame, 1000);
+            setTimeout(checkLameLoaded, 1000);
 
-            function openWavPanel() {wavPanel.classList.add('open'); if (selectedFormat === 'mp3') mp3Hint.classList.add('show'); updateRateChips();}
-            function closeWavPanel() {wavPanel.classList.remove('open');}
+            function openWavPanel() {
+                wavPanel.classList.add('open');
+                if (selectedFormat === 'mp3') {
+                    mp3Hint.classList.add('show');
+                }
+                updateRateChips();
+            }
+
+            function closeWavPanel() {
+                wavPanel.classList.remove('open');
+            }
 
             function updateRateChips() {
+                // Для MP3 — отключаем неподдерживаемые частоты
                 const chips = document.querySelectorAll('#rateChips .wav-chip');
                 chips.forEach(chip => {
                     const rate = parseInt(chip.dataset.rate, 10);
                     if (selectedFormat === 'mp3') {
                         if (MP3_SUPPORTED_RATES.includes(rate)) {
                             chip.classList.remove('disabled');
-                            chip.style.opacity = '1'; chip.style.pointerEvents = 'auto';
+                            chip.style.opacity = '1';
+                            chip.style.pointerEvents = 'auto';
                         } else {
                             chip.classList.add('disabled');
-                            chip.style.opacity = '0.3'; chip.style.pointerEvents = 'none';
+                            chip.style.opacity = '0.3';
+                            chip.style.pointerEvents = 'none';
                             if (chip.classList.contains('active')) {
                                 chip.classList.remove('active');
-                                const first = document.querySelector('#rateChips .wav-chip:not(.disabled)');
-                                if (first) {first.classList.add('active'); selectedRate = parseInt(first.dataset.rate, 10);}
+                                // Выбираем первую поддерживаемую
+                                const firstSupported = document.querySelector(
+                                    '#rateChips .wav-chip:not(.disabled)');
+                                if (firstSupported) {
+                                    firstSupported.classList.add('active');
+                                    selectedRate = parseInt(firstSupported.dataset.rate, 10);
+                                }
                             }
                         }
                     } else {
                         chip.classList.remove('disabled');
-                        chip.style.opacity = '1'; chip.style.pointerEvents = 'auto';
+                        chip.style.opacity = '1';
+                        chip.style.pointerEvents = 'auto';
                     }
                 });
             }
 
             function updatePanelVisibility() {
                 if (selectedFormat === 'pcm') {
-                    document.getElementById('rateRow').style.display = 'flex';
-                    document.getElementById('bitRow').style.display = 'flex';
-                    document.getElementById('mp3Row').style.display = 'none';
+                    rateRow.style.display = 'flex';
+                    bitRow.style.display = 'flex';
+                    mp3Row.style.display = 'none';
                     mp3Hint.classList.remove('show');
                 } else {
-                    document.getElementById('rateRow').style.display = 'flex';
-                    document.getElementById('bitRow').style.display = 'none';
-                    document.getElementById('mp3Row').style.display = 'flex';
+                    rateRow.style.display = 'flex'; // показываем, но с disabled
+                    bitRow.style.display = 'none';
+                    mp3Row.style.display = 'flex';
                     mp3Hint.classList.add('show');
-                    checkLame();
+                    checkLameLoaded();
                 }
                 updateRateChips();
             }
 
+            // Выбор формата
             document.querySelectorAll('#formatChips .wav-chip').forEach(btn => {
                 btn.addEventListener('click', function () {
-                    document.querySelectorAll('#formatChips .wav-chip').forEach(b => b.classList.remove('active'));
+                    document.querySelectorAll('#formatChips .wav-chip').forEach(b => b.classList.remove(
+                        'active'));
                     this.classList.add('active');
                     selectedFormat = this.dataset.format;
                     updatePanelVisibility();
                 });
             });
+
+            // PCM rate
             document.querySelectorAll('#rateChips .wav-chip').forEach(btn => {
                 btn.addEventListener('click', function () {
                     if (this.classList.contains('disabled')) return;
-                    document.querySelectorAll('#rateChips .wav-chip').forEach(b => b.classList.remove('active'));
+                    document.querySelectorAll('#rateChips .wav-chip').forEach(b => b.classList.remove(
+                        'active'));
                     this.classList.add('active');
                     selectedRate = parseInt(this.dataset.rate, 10);
                 });
             });
+
+            // PCM bits
             document.querySelectorAll('#bitChips .wav-chip').forEach(btn => {
                 btn.addEventListener('click', function () {
-                    document.querySelectorAll('#bitChips .wav-chip').forEach(b => b.classList.remove('active'));
+                    document.querySelectorAll('#bitChips .wav-chip').forEach(b => b.classList.remove(
+                        'active'));
                     this.classList.add('active');
                     selectedBits = parseInt(this.dataset.bits, 10);
                 });
             });
+
+            // MP3 bitrate
             document.querySelectorAll('#mp3Chips .wav-chip').forEach(btn => {
                 btn.addEventListener('click', function () {
-                    document.querySelectorAll('#mp3Chips .wav-chip').forEach(b => b.classList.remove('active'));
+                    document.querySelectorAll('#mp3Chips .wav-chip').forEach(b => b.classList.remove(
+                        'active'));
                     this.classList.add('active');
                     selectedMp3Bitrate = parseInt(this.dataset.mp3, 10);
                 });
             });
 
-            // === ГЕНЕРАЦИЯ СВИПА ===
-            function generateSweep(sampleRate, bits, format, mp3Bitrate) {
-                const fs = startFreq, fe = endFreq, dur = duration;
-                const numSamples = Math.floor(sampleRate * dur);
-                if (numSamples < 1) {alert('Слишком короткая длительность'); return null;}
+            // ===== PCM WAV =====
+            function downloadPcm(sampleRate, bits) {
+                const freq = getCurrentFreq();
+                const duration = getDuration();
+                const numSamples = Math.floor(sampleRate * duration);
+                const amplitude = 0.6;
+                let bytesPerSample;
+                if (bits === 8) bytesPerSample = 1;
+                else if (bits === 16) bytesPerSample = 2;
+                else if (bits === 24) bytesPerSample = 3;
+                else bytesPerSample = 4;
+
+                if (numSamples < 1) {
+                    alert('Слишком короткая длительность');
+                    return;
+                }
+                if (44 + numSamples * bytesPerSample > 130 * 1024 * 1024) {
+                    alert('Файл получится слишком большим.\nУменьшите длительность.');
+                    return;
+                }
+
                 const buffer = new Float32Array(numSamples);
-                const amp = 0.8;
-                if (fs === 0 && fe === 0) {
+                if (freq === 0) {
                     buffer.fill(0);
                 } else {
-                    const f0 = fs, f1 = fe;
                     for (let i = 0; i < numSamples; i++) {
-                        const t = i / sampleRate;
-                        const frac = i / numSamples;
-                        const freq = f0 + (f1 - f0) * frac;
-                        buffer[i] = amp * Math.sin(2 * Math.PI * freq * t);
+                        buffer[i] = amplitude * Math.sin(2 * Math.PI * freq * (i / sampleRate));
                     }
                 }
-                // fade
-                const fade = Math.min(Math.floor(sampleRate * 0.008), Math.floor(numSamples / 15));
-                if (fade > 0 && numSamples > fade * 2) {
-                    for (let i = 0; i < fade; i++) {const g = i / fade; buffer[i] *= g; buffer[numSamples - 1 - i] *= g;}
-                }
-                return buffer;
-            }
 
-            function downloadPcm(sampleRate, bits) {
-                const buf = generateSweep(sampleRate, bits, 'pcm');
-                if (!buf) return;
-                const numSamples = buf.length;
-                let bytesPerSample = bits === 8 ? 1 : bits === 16 ? 2 : bits === 24 ? 3 : 4;
-                if (44 + numSamples * bytesPerSample > 130 * 1024 * 1024) {alert('Файл слишком большой'); return;}
+                const fadeSamples = Math.min(Math.floor(sampleRate * 0.01), Math.floor(numSamples / 10));
+                if (fadeSamples > 0 && numSamples > fadeSamples * 2) {
+                    for (let i = 0; i < fadeSamples; i++) {
+                        const g = i / fadeSamples;
+                        buffer[i] *= g;
+                        buffer[numSamples - 1 - i] *= g;
+                    }
+                }
+
                 let dataBuffer;
                 if (bits === 8) {
                     dataBuffer = new Uint8Array(numSamples);
-                    for (let i = 0; i < numSamples; i++) {const s = Math.max(-1, Math.min(1, buf[i])); dataBuffer[i] = Math.round((s * 0.5 + 0.5) * 255);}
+                    for (let i = 0; i < numSamples; i++) {
+                        const s = Math.max(-1, Math.min(1, buffer[i]));
+                        dataBuffer[i] = Math.round((s * 0.5 + 0.5) * 255);
+                    }
                 } else if (bits === 16) {
                     dataBuffer = new Int16Array(numSamples);
-                    for (let i = 0; i < numSamples; i++) {const s = Math.max(-1, Math.min(1, buf[i])); dataBuffer[i] = Math.round(s * 0x7FFF);}
+                    for (let i = 0; i < numSamples; i++) {
+                        const s = Math.max(-1, Math.min(1, buffer[i]));
+                        dataBuffer[i] = Math.round(s * 0x7FFF);
+                    }
                 } else if (bits === 24) {
                     dataBuffer = new Uint8Array(numSamples * 3);
                     for (let i = 0; i < numSamples; i++) {
-                        const s = Math.max(-1, Math.min(1, buf[i]));
+                        const s = Math.max(-1, Math.min(1, buffer[i]));
                         let val = Math.round(s * 0x7FFFFF);
                         if (val < 0) val += 0x1000000;
-                        dataBuffer[i * 3] = val & 0xFF; dataBuffer[i * 3 + 1] = (val >> 8) & 0xFF; dataBuffer[i * 3 + 2] = (val >> 16) & 0xFF;
+                        dataBuffer[i * 3] = val & 0xFF;
+                        dataBuffer[i * 3 + 1] = (val >> 8) & 0xFF;
+                        dataBuffer[i * 3 + 2] = (val >> 16) & 0xFF;
                     }
                 } else {
                     dataBuffer = new Int32Array(numSamples);
-                    for (let i = 0; i < numSamples; i++) {const s = Math.max(-1, Math.min(1, buf[i])); dataBuffer[i] = Math.round(s * 0x7FFFFFFF);}
+                    for (let i = 0; i < numSamples; i++) {
+                        const s = Math.max(-1, Math.min(1, buffer[i]));
+                        dataBuffer[i] = Math.round(s * 0x7FFFFFFF);
+                    }
                 }
+
                 const dataSize = dataBuffer.byteLength;
                 const header = new ArrayBuffer(44);
                 const view = new DataView(header);
-                view.setUint32(0, 0x52494646, false); view.setUint32(4, 36 + dataSize, true);
-                view.setUint32(8, 0x57415645, false); view.setUint32(12, 0x666D7420, false);
-                view.setUint32(16, 16, true); view.setUint16(20, 1, true); view.setUint16(22, 1, true);
-                view.setUint32(24, sampleRate, true); view.setUint32(28, sampleRate * bytesPerSample, true);
-                view.setUint16(32, bytesPerSample, true); view.setUint16(34, bits, true);
-                view.setUint32(36, 0x64617461, false); view.setUint32(40, dataSize, true);
-                const blob = new Blob([header, dataBuffer], {type: 'audio/wav'});
+                view.setUint32(0, 0x52494646, false);
+                view.setUint32(4, 36 + dataSize, true);
+                view.setUint32(8, 0x57415645, false);
+                view.setUint32(12, 0x666D7420, false);
+                view.setUint32(16, 16, true);
+                view.setUint16(20, 1, true);
+                view.setUint16(22, 1, true);
+                view.setUint32(24, sampleRate, true);
+                view.setUint32(28, sampleRate * bytesPerSample, true);
+                view.setUint16(32, bytesPerSample, true);
+                view.setUint16(34, bits, true);
+                view.setUint32(36, 0x64617461, false);
+                view.setUint32(40, dataSize, true);
+
+                const blob = new Blob([header, dataBuffer], { type: 'audio/wav' });
                 const url = URL.createObjectURL(blob);
-                const a = document.createElement('a'); a.href = url;
-                const fLabel = startFreq.toFixed(1) + '-' + endFreq.toFixed(1);
+                const a = document.createElement('a');
+                a.href = url;
+                const freqLabel = freq === 0 ? '0.0' : freq.toFixed(1);
                 const rateLabel = sampleRate >= 1000 ? (sampleRate / 1000).toFixed(1) + 'k' : sampleRate + 'Hz';
-                a.download = `sweep_${fLabel}Hz_${duration.toFixed(1)}s_${rateLabel}_${bits}bit.wav`;
-                document.body.appendChild(a); a.click(); document.body.removeChild(a);
+                a.download = `sine_${freqLabel}Hz_${duration.toFixed(1)}s_${rateLabel}_${bits}bit.wav`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
                 setTimeout(() => URL.revokeObjectURL(url), 8000);
                 closeWavPanel();
             }
 
+            // ===== MP3 =====
             function downloadMp3(bitrate) {
                 if (typeof lamejs === 'undefined' || !lamejs.Mp3Encoder) {
-                    alert('❌ MP3 библиотека не загружена'); return;
+                    alert('❌ Библиотека MP3 не загружена.\nПроверьте интернет-соединение и обновите страницу.');
+                    return;
                 }
-                if (!MP3_SUPPORTED_RATES.includes(selectedRate)) {
-                    alert('⚠️ MP3 не поддерживает ' + selectedRate / 1000 + ' кГц'); return;
+
+                const freq = getCurrentFreq();
+                const duration = getDuration();
+                const sampleRate = selectedRate; // используем выбранную частоту
+                const numSamples = Math.floor(sampleRate * duration);
+                const amplitude = 0.8;
+
+                if (numSamples < 1) {
+                    alert('Слишком короткая длительность');
+                    return;
                 }
-                const buf = generateSweep(selectedRate, 16, 'mp3');
-                if (!buf) return;
-                const pcmData = new Int16Array(buf.length);
-                for (let i = 0; i < buf.length; i++) {const s = Math.max(-1, Math.min(1, buf[i])); pcmData[i] = Math.round(s * 0x7FFF);}
-                try {
-                    const encoder = new lamejs.Mp3Encoder(1, selectedRate, bitrate);
-                    const mp3Data = []; const block = 1152;
-                    for (let i = 0; i < pcmData.length; i += block) {
-                        const chunk = pcmData.subarray(i, Math.min(i + block, pcmData.length));
-                        const mp3buf = encoder.encodeBuffer(chunk);
-                        if (mp3buf.length > 0) mp3Data.push(mp3buf);
+
+                const buffer = new Float32Array(numSamples);
+                if (freq === 0) {
+                    buffer.fill(0);
+                } else {
+                    for (let i = 0; i < numSamples; i++) {
+                        buffer[i] = amplitude * Math.sin(2 * Math.PI * freq * (i / sampleRate));
                     }
-                    const flush = encoder.flush(); if (flush.length > 0) mp3Data.push(flush);
-                    const blob = new Blob(mp3Data, {type: 'audio/mpeg'});
+                }
+
+                const fadeSamples = Math.min(Math.floor(sampleRate * 0.01), Math.floor(numSamples / 10));
+                if (fadeSamples > 0 && numSamples > fadeSamples * 2) {
+                    for (let i = 0; i < fadeSamples; i++) {
+                        const g = i / fadeSamples;
+                        buffer[i] *= g;
+                        buffer[numSamples - 1 - i] *= g;
+                    }
+                }
+
+                const pcmData = new Int16Array(numSamples);
+                for (let i = 0; i < numSamples; i++) {
+                    const s = Math.max(-1, Math.min(1, buffer[i]));
+                    pcmData[i] = Math.round(s * 0x7FFF);
+                }
+
+                try {
+                    const mp3encoder = new lamejs.Mp3Encoder(1, sampleRate, bitrate);
+                    const mp3Data = [];
+                    const blockSize = 1152;
+                    for (let i = 0; i < pcmData.length; i += blockSize) {
+                        const chunk = pcmData.subarray(i, Math.min(i + blockSize, pcmData.length));
+                        const mp3buf = mp3encoder.encodeBuffer(chunk);
+                        if (mp3buf.length > 0) {
+                            mp3Data.push(mp3buf);
+                        }
+                    }
+                    const mp3buf = mp3encoder.flush();
+                    if (mp3buf.length > 0) {
+                        mp3Data.push(mp3buf);
+                    }
+
+                    const blob = new Blob(mp3Data, { type: 'audio/mpeg' });
                     const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a'); a.href = url;
-                    const fLabel = startFreq.toFixed(1) + '-' + endFreq.toFixed(1);
-                    const rateLabel = selectedRate >= 1000 ? (selectedRate / 1000).toFixed(1) + 'k' : selectedRate + 'Hz';
-                    a.download = `sweep_${fLabel}Hz_${duration.toFixed(1)}s_${rateLabel}_${bitrate}kbps.mp3`;
-                    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    const freqLabel = freq === 0 ? '0.0' : freq.toFixed(1);
+                    const rateLabel = sampleRate >= 1000 ? (sampleRate / 1000).toFixed(1) + 'k' : sampleRate + 'Hz';
+                    a.download = `sine_${freqLabel}Hz_${duration.toFixed(1)}s_${rateLabel}_${bitrate}kbps.mp3`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
                     setTimeout(() => URL.revokeObjectURL(url), 8000);
                     closeWavPanel();
-                } catch (e) {alert('Ошибка MP3: ' + e.message);}
+                } catch (e) {
+                    alert('Ошибка кодирования MP3:\n' + e.message);
+                }
             }
 
             function doDownload() {
-                if (selectedFormat === 'mp3' && (!lameLoaded || typeof lamejs === 'undefined' || !lamejs.Mp3Encoder)) {
-                    alert('🌐 Для MP3 требуется интернет и загрузка библиотеки.'); return;
+                if (selectedFormat === 'mp3') {
+                    if (typeof lamejs === 'undefined' || !lamejs.Mp3Encoder) {
+                        alert('🌐 Для MP3 требуется интернет.\nПожалуйста, проверьте соединение и обновите страницу.');
+                        return;
+                    }
+                    // Проверяем, что частота поддерживается
+                    if (!MP3_SUPPORTED_RATES.includes(selectedRate)) {
+                        alert('⚠️ MP3 не поддерживает частоту ' + (selectedRate / 1000) + ' кГц.\nДоступны: 8, 16, 22.05, 32, 44.1, 48 кГц.');
+                        return;
+                    }
                 }
-                const orig = wavDownloadConfirm.textContent;
+
+                const originalText = wavDownloadConfirm.textContent;
                 wavDownloadConfirm.textContent = '⏳ Генерация...';
-                wavDownloadConfirm.disabled = true; wavDownloadConfirm.style.opacity = '0.7';
+                wavDownloadConfirm.disabled = true;
+                wavDownloadConfirm.style.opacity = '0.7';
                 wavPanelClose.disabled = true;
-                setTimeout(() => {
+
+                setTimeout(function () {
                     try {
-                        if (selectedFormat === 'pcm') downloadPcm(selectedRate, selectedBits);
-                        else downloadMp3(selectedMp3Bitrate);
-                    } catch (e) {alert('Ошибка: ' + e.message);}
-                    finally {
-                        wavDownloadConfirm.textContent = orig;
-                        wavDownloadConfirm.disabled = false; wavDownloadConfirm.style.opacity = '1';
+                        if (selectedFormat === 'pcm') {
+                            downloadPcm(selectedRate, selectedBits);
+                        } else {
+                            downloadMp3(selectedMp3Bitrate);
+                        }
+                    } catch (err) {
+                        console.error(err);
+                        alert('Ошибка генерации: ' + (err.message || err));
+                    } finally {
+                        wavDownloadConfirm.textContent = originalText;
+                        wavDownloadConfirm.disabled = false;
+                        wavDownloadConfirm.style.opacity = '1';
                         wavPanelClose.disabled = false;
                     }
                 }, 50);
             }
 
-            // события
-            document.getElementById('downloadBtn').addEventListener('click', openWavPanel);
-            document.getElementById('downloadBtn').addEventListener('touchstart', e => {e.preventDefault(); openWavPanel();}, {passive: false});
+            // --- события кнопок шкалы ---
+            document.querySelectorAll('.scale-btn').forEach(btn => {
+                btn.addEventListener('click', function () {
+                    setScale(this.dataset.scale);
+                });
+                btn.addEventListener('touchstart', function (e) {
+                    e.preventDefault();
+                    setScale(this.dataset.scale);
+                }, { passive: false });
+            });
+
+            // --- основные события ---
+            toggleBtn.addEventListener('click', toggleSound);
+            toggleBtn.addEventListener('touchstart', function (e) {
+                e.preventDefault();
+                toggleSound();
+            }, { passive: false });
+
+            downloadBtn.addEventListener('click', function (e) {
+                e.preventDefault();
+                openWavPanel();
+            });
+            downloadBtn.addEventListener('touchstart', function (e) {
+                e.preventDefault();
+                openWavPanel();
+            }, { passive: false });
+
             wavDownloadConfirm.addEventListener('click', doDownload);
-            wavDownloadConfirm.addEventListener('touchstart', e => {e.preventDefault(); doDownload();}, {passive: false});
+            wavDownloadConfirm.addEventListener('touchstart', function (e) {
+                e.preventDefault();
+                doDownload();
+            }, { passive: false });
+
             wavPanelClose.addEventListener('click', closeWavPanel);
-            wavPanelClose.addEventListener('touchstart', e => {e.preventDefault(); closeWavPanel();}, {passive: false});
+            wavPanelClose.addEventListener('touchstart', function (e) {
+                e.preventDefault();
+                closeWavPanel();
+            }, { passive: false });
+
+            slider.addEventListener('touchstart', function (e) {
+                if (!isPlaying) {
+                    setTimeout(() => {
+                        if (!isPlaying) toggleSound();
+                    }, 50);
+                }
+            }, { passive: true });
+
+            document.addEventListener('visibilitychange', function () {
+                if (document.hidden && isPlaying) {
+                    stopSound();
+                }
+            });
+
+            durationInput.addEventListener('blur', function () {
+                let val = parseFloat(durationInput.value);
+                if (isNaN(val) || val < 0.1) val = 0.1;
+                if (val > 1000) val = 1000;
+                durationInput.value = val.toFixed(1);
+            });
+
+            durationInput.addEventListener('input', function () {
+                let val = parseFloat(durationInput.value);
+                if (isNaN(val)) return;
+                if (val < 0.1) val = 0.1;
+                if (val > 1000) val = 1000;
+            });
 
             // инициализация
-            updateDisplay();
-            // чтоб ссылка "к генератору" вела на index.html – уже есть в href
+            exactFreq = 1000;
+            updateDisplay(1000);
+            durationInput.value = '60.0';
+            const initSliderVal = freqToSlider(1000);
+            slider.value = Math.min(1, Math.max(0, initSliderVal));
+
+            document.addEventListener('touchstart', function initAudio() {
+                if (!audioCtx) {
+                    try {
+                        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    } catch (e) {}
+                }
+                document.removeEventListener('touchstart', initAudio);
+            }, { once: true, passive: true });
+
+            document.addEventListener('click', function initAudioClick() {
+                if (!audioCtx) {
+                    try {
+                        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    } catch (e) {}
+                }
+                document.removeEventListener('click', initAudioClick);
+            }, { once: true, passive: true });
+
         })();
     </script>
 </body>
